@@ -289,7 +289,12 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV must contain a header and at least one data row." } });
         return;
       }
-      const headers = rows[0].map((header) => header.trim());
+      const headerRow = rows[0];
+      if (!headerRow) {
+        res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV header row is missing." } });
+        return;
+      }
+      const headers = headerRow.map((header) => header.trim());
       if (headers.some((header) => !header) || new Set(headers).size !== headers.length || headers.length > 500) {
         res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV headers must be unique, non-empty and limited to 500 columns." } });
         return;
