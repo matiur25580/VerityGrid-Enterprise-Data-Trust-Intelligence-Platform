@@ -25,7 +25,7 @@ Before promoting a release:
 - The API emits structured completion logs containing request ID, method, path, status, duration and timestamp. Query strings, request bodies, credentials, cookies and client IP addresses are intentionally excluded.
 - Correlate client-reported request IDs with API logs. Forward logs to a managed log platform with access controls and retention policies.
 
-Redis and worker health should be monitored independently using Redis metrics and BullMQ queue state. A healthy API response does not imply that background workers are healthy.
+Redis and worker health should be monitored independently using Redis metrics and BullMQ queue state. A healthy API response does not imply that background workers are healthy. The API rate limiter also depends on Redis: set `REDIS_URL` on every API replica, alert on Redis connection errors, and test the configured Redis failover behavior before release.
 
 ## 3. PostgreSQL backup
 
@@ -76,7 +76,7 @@ Run the API and worker as separate supervised processes. Monitor:
 - freshness scheduler execution lag,
 - notification delivery failures and retry exhaustion.
 
-Set alerts on sustained queue growth and repeated worker crashes. Keep Redis private, authenticated and encrypted in transit where supported. Configure persistence and backups appropriate to the deployment topology; Redis queues are not the system of record for business entities.
+Set alerts on sustained queue growth and repeated worker crashes. Keep Redis private, authenticated and encrypted in transit where supported. API rate limiting uses atomic Redis counters shared by replicas; Redis is a required dependency for rate-limited routes and must not be exposed publicly. Configure persistence and backups appropriate to the deployment topology; Redis queues are not the system of record for business entities.
 
 ## 6. Secrets and environment
 
