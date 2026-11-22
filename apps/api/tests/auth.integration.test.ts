@@ -111,6 +111,23 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId).expect(200);
     expect(exportResponse.headers["content-type"]).toContain("text/csv");
     expect(exportResponse.text).toContain("passed_count");
+    expect(exportResponse.text).not.toContain("1001,42.50");
+    const formulaAsset = await client.post("/api/catalog/assets")
+      .set("x-organization-id", organizationId)
+      .send({ name: "=HYPERLINK(\"https://example.invalid\")", fullyQualifiedName: "test.formula_export", assetType: "TABLE", schema: [] })
+      .expect(201);
+    await client.post("/api/reliability/freshness/policies")
+      .set("x-organization-id", organizationId)
+      .send({ assetId: formulaAsset.body.data.asset.id, targetMinutes: 60 })
+      .expect(201);
+    const freshnessExport = await client.get("/api/reliability/exports?type=freshness")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(freshnessExport.text).toContain("'=HYPERLINK");
+    await client.post("/api/reliability/actions/classification")
+      .set("x-organization-id", organizationId)
+      .send({ assetId, policyId: randomUUID(), classification: "RESTRICTED", reason: "Attempt to use another workspace policy." })
+      .expect(404);
+
 
     await client.post(`/api/quality/assets/${assetId}/rules`)
       .set("x-organization-id", organizationId)
