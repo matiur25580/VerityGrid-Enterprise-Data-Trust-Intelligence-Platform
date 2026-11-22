@@ -43,25 +43,25 @@ export async function processFreshnessEvaluation(now = new Date()) {
       const severity = state === "BREACHED" ? "HIGH" : "MEDIUM";
       const transition = await prisma.$transaction(async tx => {
         const existing = await tx.incident.findUnique({ where: { organizationId_sourceKey: { organizationId: policy.organizationId, sourceKey } } });
-        if (state === "UNKNOWN") return { changed: false, incidentId: null as string | null, created: false };
+        if (state === "UNKNOWN") return { changed: false, incidentId: null as string | null, created: false, reopened: false };
         if (!existing && nextStatus === "RESOLVED") return { changed: false, incidentId: null as string | null, created: false };
         if (!existing) {
           const incident = await tx.incident.create({ data: { organizationId: policy.organizationId, sourceKey, title: state === "BREACHED" ? "Dataset freshness SLA breached" : "Dataset freshness at risk", description: policy.asset.name + " has not been observed within its configured freshness objective.", severity, status: "OPEN", assetId: policy.assetId, createdBy: SYSTEM_ACTOR_ID } });
           await tx.incidentEvent.create({ data: { organizationId: policy.organizationId, incidentId: incident.id, actorId: SYSTEM_ACTOR_ID, eventType: "FRESHNESS_SLA_BREACHED", detail: "Scheduled freshness evaluation opened a " + state.toLowerCase() + " incident." } });
           await tx.auditEvent.create({ data: { organizationId: policy.organizationId, actorId: SYSTEM_ACTOR_ID, action: "FRESHNESS_INCIDENT_CREATED", entityType: "Incident", entityId: incident.id, metadata: { assetId: policy.assetId, state, evaluatedAt: now.toISOString() } } });
-          return { changed: true, incidentId: incident.id, created: true };
+          return { changed: true, incidentId: incident.id, created: true, reopened: false };
         }
         const changed = existing.status !== nextStatus || (nextStatus === "OPEN" && existing.severity !== severity);
-        if (!changed) return { changed: false, incidentId: existing.id, created: false };
+        if (!changed) return { changed: false, incidentId: existing.id, created: false, reopened: false };
         await tx.incident.update({ where: { id: existing.id }, data: { status: nextStatus, severity, title: state === "BREACHED" ? "Dataset freshness SLA breached" : state === "AT_RISK" ? "Dataset freshness at risk" : existing.title } });
         await tx.incidentEvent.create({ data: { organizationId: policy.organizationId, incidentId: existing.id, actorId: SYSTEM_ACTOR_ID, eventType: nextStatus === "OPEN" ? "FRESHNESS_SLA_ESCALATED" : "FRESHNESS_SLA_RECOVERED", detail: nextStatus === "OPEN" ? "Scheduled freshness evaluation detected " + state.toLowerCase() + " status." : "Dataset freshness returned within its configured objective." } });
         await tx.auditEvent.create({ data: { organizationId: policy.organizationId, actorId: SYSTEM_ACTOR_ID, action: nextStatus === "OPEN" ? "FRESHNESS_INCIDENT_UPDATED" : "FRESHNESS_INCIDENT_RECOVERED", entityType: "Incident", entityId: existing.id, metadata: { assetId: policy.assetId, state, evaluatedAt: now.toISOString() } } });
-        return { changed: true, incidentId: existing.id, created: false };
+        return { changed: true, incidentId: existing.id, created: false, reopened: nextStatus === "OPEN" && (existing.status === "RESOLVED" || existing.status === "CLOSED") };
       });
       if (transition.changed && transition.incidentId) {
         if (nextStatus === "OPEN") {
           opened++;
-          if (transition.created || severity === "HIGH") await enqueueIncidentNotification({ organizationId: policy.organizationId, incidentId: transition.incidentId, severity, eventKey: transition.created ? "freshness-opened" : "freshness-escalated-" + severity.toLowerCase() });
+          if (transition.created || transition.reopened || severity === "HIGH") await enqueueIncidentNotification({ organizationId: policy.organizationId, incidentId: transition.incidentId, severity, eventKey: transition.created ? "freshness-opened" : transition.reopened ? "freshness-reopened-" + now.getTime() : "freshness-escalated-" + severity.toLowerCase() });
         } else recovered++;
       }
     }
