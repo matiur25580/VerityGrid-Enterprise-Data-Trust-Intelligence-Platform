@@ -6,6 +6,7 @@ import { prisma } from "./prisma";
 const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379", { maxRetriesPerRequest: null, enableReadyCheck: true });
 export const qualityQueue = new Queue("veritygrid-quality", { connection, defaultJobOptions: { attempts: 4, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: { age: 86400, count: 1000 }, removeOnFail: false } });
 export const qualityQueueEvents = new QueueEvents("veritygrid-quality", { connection });
+export const deadLetterQueue = new Queue("veritygrid-quality-dead-letter", { connection, defaultJobOptions: { removeOnComplete: false, removeOnFail: false } });
 
 type ValidationJob = { organizationId: string; assetId: string; requestedBy: string; requestKey: string };
 function object(value: Prisma.JsonValue): Record<string, unknown> {
@@ -39,9 +40,9 @@ export async function processQualityJob(data: ValidationJob) {
 
 export function startQualityWorker() {
   const worker = new Worker<ValidationJob>("veritygrid-quality", job => processQualityJob(job.data), { connection, concurrency: Number(process.env.QUALITY_WORKER_CONCURRENCY ?? 4) });
-  worker.on("failed", (job, error) => { if(job) console.error("Quality job failed", {jobId:job.id,attemptsMade:job.attemptsMade,errorCode:error.message.slice(0,80)}); });
+  worker.on("failed", async (job, error) => { if(job) { console.error("Quality job failed", {jobId:job.id,attemptsMade:job.attemptsMade,errorCode:error.message.slice(0,80)}); if(job.attemptsMade >= Number(job.opts.attempts ?? 1)) await deadLetterQueue.add("terminal-failure", { organizationId: job.data.organizationId, assetId: job.data.assetId, originalJobId: job.id, failedAt: new Date().toISOString(), errorCode: error.message.slice(0,80) }, { jobId: `dead_${job.id}` }); } });
   return worker;
 }
 export async function enqueueQualityJob(data: ValidationJob, options: JobsOptions = {}) {
-  return qualityQueue.add("validate-asset", data, { jobId: data.requestKey, ...options });
+  return qualityQueue.add("validate-asset", data, { jobId: data.requestKey.replace(/:/g, "_"), ...options });
 }
