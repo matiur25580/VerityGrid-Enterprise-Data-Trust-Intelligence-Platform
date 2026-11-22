@@ -56,6 +56,33 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", randomUUID())
       .expect(403);
 
+    const source = await client
+      .post("/api/catalog/sources")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Finance Uploads", sourceType: "CSV", description: "Test source" })
+      .expect(201);
+    expect(source.body.data.source.organizationId).toBe(organizationId);
+
+    const imported = await client
+      .post("/api/catalog/assets/import")
+      .set("x-organization-id", organizationId)
+      .send({
+        name: "orders",
+        format: "CSV",
+        content: "order_id,total\\n1001,42.50\\n1002,18.00",
+        classification: "CONFIDENTIAL",
+      })
+      .expect(201);
+    expect(imported.body.data.importedRows).toBe(2);
+    expect(imported.body.data.discoveredColumns).toBe(2);
+
+    const catalog = await client
+      .get("/api/catalog/assets?q=orders")
+      .set("x-organization-id", organizationId)
+      .expect(200);
+    expect(catalog.body.data.assets).toHaveLength(1);
+    expect(catalog.body.data.assets[0].classification).toBe("CONFIDENTIAL");
+
     await client.post("/api/auth/sessions/rotate").expect(200);
     await client.get("/api/auth/me").expect(200);
 
