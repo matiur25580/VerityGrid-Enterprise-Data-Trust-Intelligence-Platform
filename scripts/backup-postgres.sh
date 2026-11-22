@@ -16,7 +16,7 @@ backup_file="$BACKUP_DIR/veritygrid-$timestamp.dump"
 checksum_file="$backup_file.sha256"
 
 pg_dump --format=custom --no-owner --no-acl --file="$backup_file" "$DATABASE_URL"
-sha256sum "$backup_file" > "$checksum_file"
+(cd "$BACKUP_DIR" && sha256sum "$(basename "$backup_file")" > "$(basename "$checksum_file")")
 chmod 600 "$backup_file" "$checksum_file"
 find "$BACKUP_DIR" -type f -name 'veritygrid-*.dump' -mtime "+$RETENTION_DAYS" -delete
 find "$BACKUP_DIR" -type f -name 'veritygrid-*.dump.sha256' -mtime "+$RETENTION_DAYS" -delete
