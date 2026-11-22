@@ -16,3 +16,8 @@ ALTER TABLE "GovernanceApproval" ADD CONSTRAINT "GovernanceApproval_policyId_fke
 CREATE TABLE "AuditEvent" ("id" UUID NOT NULL,"organizationId" UUID NOT NULL,"actorId" UUID NOT NULL,"action" VARCHAR(80) NOT NULL,"entityType" VARCHAR(80) NOT NULL,"entityId" VARCHAR(180) NOT NULL,"metadata" JSONB NOT NULL DEFAULT '{}',"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "AuditEvent_pkey" PRIMARY KEY ("id"));
 CREATE INDEX "AuditEvent_organizationId_createdAt_idx" ON "AuditEvent"("organizationId","createdAt");
 CREATE INDEX "AuditEvent_organizationId_entityType_entityId_idx" ON "AuditEvent"("organizationId","entityType","entityId");
+
+ALTER TABLE "QualityRun" ADD COLUMN "jobKey" VARCHAR(180);
+CREATE UNIQUE INDEX "QualityRun_jobKey_key" ON "QualityRun"("jobKey");
+ALTER TABLE "IncidentEvent" ADD COLUMN "sourceKey" VARCHAR(180);
+CREATE UNIQUE INDEX "IncidentEvent_sourceKey_key" ON "IncidentEvent"("sourceKey");
