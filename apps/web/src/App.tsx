@@ -1,5 +1,5 @@
 import { Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, CircleHelp, Database, GitBranch, LayoutDashboard, Search, ShieldCheck, Workflow } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const navigation = [
   { label: "Overview", icon: LayoutDashboard, active: true },
@@ -10,7 +10,7 @@ const navigation = [
   { label: "Incidents", icon: Activity },
 ];
 
-function App() {
+function App() {\n  const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(new Date());
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
 
   useEffect(() => {
@@ -44,7 +44,7 @@ function App() {
         </header>
 
         <section className="content">
-          <div className="page-heading"><div><div className="eyebrow">MONDAY, NOVEMBER 23, 2026</div><h1>Data command center</h1><p>A live view of your organization's data trust and reliability.</p></div><button className="date-button">Last 30 days <span>⌄</span></button></div>
+          <div className="page-heading"><div><div className="eyebrow">{today.toUpperCase()}</div><h1>Data command center</h1><p>A live view of your organization's data trust and reliability.</p></div><button className="date-button">Last 30 days <span>⌄</span></button></div>
 
           <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Connect a source to begin cataloging assets and measuring data quality.</p></div><span className="strip-status"><i/> Foundation preview</span></div>
 
@@ -70,7 +70,7 @@ function App() {
   );
 }
 
-function Metric({ title, value, detail, icon }: { title: string; value: string; detail: string; icon: React.ReactNode }) {
+function Metric({ title, value, detail, icon }: { title: string; value: string; detail: string; icon: ReactNode }) {
   return <article className="metric-card"><div className="metric-top"><span>{title}</span><i>{icon}</i></div><strong>{value}</strong><div className="metric-detail">{detail}</div><div className="metric-foot"><span>Awaiting data</span><ArrowDownRight size={14}/></div></article>;
 }
 
