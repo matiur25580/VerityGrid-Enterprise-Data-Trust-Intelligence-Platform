@@ -25,7 +25,7 @@ Set `REDIS_URL` and optionally `QUALITY_WORKER_CONCURRENCY` in the API environme
 - `POST /api/operations/incidents`
 - `PATCH /api/operations/incidents/:incidentId`
 
-Incident lifecycle: OPEN → ACKNOWLEDGED → RESOLVED → CLOSED. Updates require an event detail and append a history row. Assignees must be members of the selected organization; pass `assigneeId` in the incident PATCH body to assign or `null` to unassign. Lifecycle transitions are validated by the API. Quality failures create incidents automatically.
+Allowed incident transitions: OPEN → ACKNOWLEDGED or RESOLVED; ACKNOWLEDGED → RESOLVED; RESOLVED → CLOSED. Updates require an event detail and append a history row. Assignees must be members of the selected organization; pass `assigneeId` in the incident PATCH body to assign or `null` to unassign. Lifecycle transitions are validated by the API. Quality failures create incidents automatically.
 
 ## Governance and audit
 
