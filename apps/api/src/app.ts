@@ -7,6 +7,7 @@ import { originGuard } from "./middleware/origin-guard";
 import { errorHandler } from "./middleware/error-handler";
 import { requestContext } from "./middleware/request-context";
 import { createApiRateLimiter } from "./middleware/api-rate-limit";
+import { RedisRateLimitStore } from "./lib/rate-limit-store";
 import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
 import { organizationsRouter } from "./routes/organizations";
@@ -35,6 +36,7 @@ const authLimiter = rateLimit({
   limit: 10,
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  store: new RedisRateLimitStore("auth"),
   message: {
     error: {
       code: "AUTH_RATE_LIMITED",
