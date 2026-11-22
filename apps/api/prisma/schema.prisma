@@ -51,6 +51,7 @@ model Organization {
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
   lineageEdges LineageEdge[]
+  freshnessPolicies FreshnessPolicy[]
   @@index([status, createdAt])
 }
 
@@ -143,6 +144,7 @@ model FreshnessPolicy {
   warnAtPercent Int @default(80)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
   @@unique([organizationId, assetId])
   @@index([organizationId, targetMinutes])
