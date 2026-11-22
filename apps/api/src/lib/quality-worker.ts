@@ -2,6 +2,7 @@ import { Worker, Queue, QueueEvents, JobsOptions } from "bullmq";
 import IORedis from "ioredis";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
+import { notificationProvider } from "./notifications";
 
 const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379", { maxRetriesPerRequest: null, enableReadyCheck: true });
 export const qualityQueue = new Queue("veritygrid-quality", { connection, defaultJobOptions: { attempts: 4, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: { age: 86400, count: 1000 }, removeOnFail: false } });
@@ -34,7 +35,7 @@ export async function processQualityJob(data: ValidationJob) {
   const passedCount=results.filter(x=>x.status==="PASSED").length, failedCount=results.filter(x=>x.status==="FAILED").length, skippedCount=results.filter(x=>x.status==="SKIPPED").length;
   const evaluated=passedCount+failedCount, score=evaluated?Number((passedCount/evaluated*100).toFixed(2)):null;
   const run=await prisma.qualityRun.create({data:{organizationId:data.organizationId,assetId:asset.id,score,passedCount,failedCount,skippedCount,results:results as unknown as Prisma.InputJsonValue}});
-  if(failedCount>0) await prisma.incident.upsert({where:{organizationId_sourceKey:{organizationId:data.organizationId,sourceKey:"quality:"+run.id}},create:{organizationId:data.organizationId,sourceKey:"quality:"+run.id,title:"Data quality validation failed",description:`${failedCount} quality rule(s) failed for ${asset.name}.`,severity:failedCount>=3?"HIGH":"MEDIUM",status:"OPEN",assetId:asset.id,createdBy:data.requestedBy},update:{}});
+  if(failedCount>0) { const incident=await prisma.incident.create({data:{organizationId:data.organizationId,sourceKey:"quality:"+run.id,title:"Data quality validation failed",description:`${failedCount} quality rule(s) failed for ${asset.name}.`,severity:failedCount>=3?"HIGH":"MEDIUM",status:"OPEN",assetId:asset.id,createdBy:data.requestedBy}}); await prisma.incidentEvent.create({data:{organizationId:data.organizationId,incidentId:incident.id,actorId:data.requestedBy,eventType:"QUALITY_FAILURE",detail:`${failedCount} validation rule(s) failed in run ${run.id}.`}}); await prisma.auditEvent.create({data:{organizationId:data.organizationId,actorId:data.requestedBy,action:"QUALITY_INCIDENT_CREATED",entityType:"Incident",entityId:incident.id,metadata:{runId:run.id,failedCount}}}); await notificationProvider.incidentCreated({organizationId:data.organizationId,incidentId:incident.id,severity:incident.severity}); }
   return {runId:run.id,passedCount,failedCount,skippedCount};
 }
 
