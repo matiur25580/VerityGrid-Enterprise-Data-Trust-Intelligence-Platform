@@ -96,7 +96,7 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
     end.setUTCHours(0, 0, 0, 0);
     const start = new Date(end);
     start.setUTCDate(start.getUTCDate() - (days - 1));
-    const [qualityRows, incidentRows] = await Promise.all([
+    const [qualityRows, incidentRows, freshnessRows] = await Promise.all([
       prisma.$queryRaw<Array<{ day: Date; runs: number; failedRuns: number; averageScore: number | null }>>(Prisma.sql`
         SELECT date_trunc('day', "executedAt") AS day,
           COUNT(*)::int AS runs,
@@ -114,9 +114,19 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
         WHERE "organizationId" = ${organizationId}::uuid AND "createdAt" >= ${start}
         GROUP BY date_trunc('day', "createdAt") ORDER BY day ASC
       `),
+      prisma.$queryRaw<Array<{ day: Date; monitored: number; healthy: number; atRisk: number; breached: number; unknown: number }>>(Prisma.sql`
+        SELECT "snapshotDate" AS day, COUNT(*)::int AS monitored,
+          COUNT(*) FILTER (WHERE status = 'HEALTHY')::int AS healthy,
+          COUNT(*) FILTER (WHERE status = 'AT_RISK')::int AS "atRisk",
+          COUNT(*) FILTER (WHERE status = 'BREACHED')::int AS breached,
+          COUNT(*) FILTER (WHERE status = 'UNKNOWN')::int AS unknown
+        FROM "FreshnessSnapshot"
+        WHERE "organizationId" = ${organizationId}::uuid AND "snapshotDate" >= ${start}
+        GROUP BY "snapshotDate" ORDER BY "snapshotDate" ASC
+      `),
     ]);
     const quality = new Map(qualityRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
-    const incident = new Map(incidentRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
+    const incident = new Map(incidentRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));\n    const freshness = new Map(freshnessRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
     const series = Array.from({ length: days }, (_, index) => {
       const date = new Date(start);
       date.setUTCDate(start.getUTCDate() + index);
