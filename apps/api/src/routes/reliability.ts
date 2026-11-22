@@ -13,9 +13,9 @@ const classification = z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : value instanceof Date ? value.toISOString() : String(value);
-  const safe = /^[\\s]*[=+\\-@]/.test(text) ? "'" + text : text;\n  return '"' + safe.replace(/"/g, '""') + '"';
+  const safe = /^[\\s]*[=+\\-@]/.test(text) ? "'" + text : text;
+  return '"' + safe.replace(/"/g, '""') + '"';
 }
-
 function freshnessStatus(lastObservedAt: Date | null, targetMinutes: number, warnAtPercent: number, now: Date) {
   if (!lastObservedAt) return { status: "UNKNOWN", ageMinutes: null, targetMinutes };
   const ageMinutes = Math.max(0, Math.floor((now.getTime() - lastObservedAt.getTime()) / 60000));
