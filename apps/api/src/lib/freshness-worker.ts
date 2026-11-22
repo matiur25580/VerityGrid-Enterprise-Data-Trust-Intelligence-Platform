@@ -31,6 +31,13 @@ export async function processFreshnessEvaluation(now = new Date()) {
     for (const policy of policies) {
       evaluated++;
       const state = evaluate(policy.asset.lastObservedAt, policy.targetMinutes, policy.warnAtPercent, now);
+      const snapshotDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      const ageMinutes = policy.asset.lastObservedAt ? Math.max(0, Math.floor((now.getTime() - policy.asset.lastObservedAt.getTime()) / 60000)) : null;
+      await prisma.freshnessSnapshot.upsert({
+        where: { organizationId_assetId_snapshotDate: { organizationId: policy.organizationId, assetId: policy.assetId, snapshotDate } },
+        create: { organizationId: policy.organizationId, assetId: policy.assetId, snapshotDate, status: state, ageMinutes, targetMinutes: policy.targetMinutes },
+        update: { status: state, ageMinutes, targetMinutes: policy.targetMinutes },
+      });
       const sourceKey = "freshness:" + policy.assetId;
       const nextStatus = state === "BREACHED" || state === "AT_RISK" ? "OPEN" : "RESOLVED";
       const severity = state === "BREACHED" ? "HIGH" : "MEDIUM";
