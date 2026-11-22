@@ -17,6 +17,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 - Automatic schema and profiling metadata discovery.
 - Asset ownership and data-classification metadata.
 - Tenant-scoped catalog search and access controls.
+- Stable cursor-based asset pagination (1–100 records per page) with workspace/filter-bound cursor validation.
 - PostgreSQL source registration is currently metadata-only; live external database introspection is a planned connector capability.
 
 ### Data quality and lineage
