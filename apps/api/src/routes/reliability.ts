@@ -13,7 +13,7 @@ const classification = z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : value instanceof Date ? value.toISOString() : String(value);
-  return '"' + text.replace(/"/g, '""') + '"';
+  const safe = /^[\\s]*[=+\\-@]/.test(text) ? "'" + text : text;\n  return '"' + safe.replace(/"/g, '""') + '"';
 }
 
 function freshnessStatus(lastObservedAt: Date | null, targetMinutes: number, warnAtPercent: number, now: Date) {
