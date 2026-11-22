@@ -48,7 +48,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 ### Enterprise engineering foundations
 - Multi-tenant organization membership and role-based access control.
 - Opaque, database-backed sessions with secure cookie settings, rotation and revocation.
-- Password hashing, global API rate limiting with stricter authentication limits, request validation, Helmet, explicit CORS and origin checks.
+- Password hashing, Redis-backed distributed API rate limiting with a separate stricter authentication namespace, request validation, Helmet, explicit CORS and origin checks.
 - Server-generated request IDs and privacy-conscious structured HTTP logs.
 - Liveness and PostgreSQL readiness endpoints.
 - GitHub Actions CI, CodeQL security analysis, Dependabot update automation and pull-request review checklist.
