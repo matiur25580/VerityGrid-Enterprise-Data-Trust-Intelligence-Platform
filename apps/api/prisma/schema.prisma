@@ -7,115 +7,151 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum OrganizationStatus {
-  ACTIVE
-  SUSPENDED
-}
-enum MembershipRole {
-  OWNER
-  ADMIN
-  DATA_STEWARD
-  DATA_ENGINEER
-  ANALYST
-  VIEWER
-}
-enum DataSourceType {
-  POSTGRESQL
-  CSV
-  JSON
-}
-enum DataClassification {
-  PUBLIC
-  INTERNAL
-  CONFIDENTIAL
-  RESTRICTED
-}
+enum OrganizationStatus { ACTIVE SUSPENDED }
+enum MembershipRole { OWNER ADMIN DATA_STEWARD DATA_ENGINEER ANALYST VIEWER }
+enum DataSourceType { POSTGRESQL CSV JSON }
+enum DataClassification { PUBLIC INTERNAL CONFIDENTIAL RESTRICTED }
+enum QualityRuleType { MIN_ROW_COUNT COLUMN_EXISTS NOT_NULL MAX_NULL_PERCENT UNIQUE }
 
 model Organization {
-  id          String               @id @default(uuid()) @db.Uuid
-  name        String               @db.VarChar(160)
-  slug        String               @unique @db.VarChar(80)
-  status      OrganizationStatus   @default(ACTIVE)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  id String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(160)
+  slug String @unique @db.VarChar(80)
+  status OrganizationStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   memberships Membership[]
-  dataAssets  DataAsset[]
+  dataAssets DataAsset[]
   dataSources DataSource[]
+  qualityRules QualityRule[]
+  qualityRuns QualityRun[]
+  lineageEdges LineageEdge[]
   @@index([status, createdAt])
 }
 
 model User {
-  id           String       @id @default(uuid()) @db.Uuid
-  email        String       @unique @db.VarChar(254)
-  passwordHash String       @db.VarChar(255)
-  displayName  String       @db.VarChar(120)
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  memberships  Membership[]
-  sessions     Session[]
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique @db.VarChar(254)
+  passwordHash String @db.VarChar(255)
+  displayName String @db.VarChar(120)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memberships Membership[]
+  sessions Session[]
 }
 
 model Session {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
-  tokenHash String    @unique @db.VarChar(64)
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  tokenHash String @unique @db.VarChar(64)
   expiresAt DateTime
   revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, expiresAt])
   @@index([expiresAt])
 }
 
 model Membership {
-  id             String         @id @default(uuid()) @db.Uuid
-  organizationId String         @db.Uuid
-  userId         String         @db.Uuid
-  role           MembershipRole @default(VIEWER)
-  createdAt      DateTime       @default(now())
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  userId String @db.Uuid
+  role MembershipRole @default(VIEWER)
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([organizationId, userId])
   @@index([userId, role])
   @@index([organizationId, role])
 }
 
 model DataSource {
-  id             String         @id @default(uuid()) @db.Uuid
-  organizationId String         @db.Uuid
-  name           String         @db.VarChar(160)
-  sourceType     DataSourceType
-  description    String?        @db.Text
-  metadata       Json           @default("{}")
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  assets         DataAsset[]
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  name String @db.VarChar(160)
+  sourceType DataSourceType
+  description String? @db.Text
+  metadata Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assets DataAsset[]
   @@unique([organizationId, name])
   @@index([organizationId, sourceType, createdAt])
 }
 
 model DataAsset {
-  id                 String              @id @default(uuid()) @db.Uuid
-  organizationId     String              @db.Uuid
-  sourceId           String?             @db.Uuid
-  name               String              @db.VarChar(180)
-  fullyQualifiedName String              @db.VarChar(512)
-  description        String?             @db.Text
-  assetType          String              @db.VarChar(40)
-  ownerName          String?             @db.VarChar(120)
-  classification     DataClassification   @default(INTERNAL)
-  rowCount           Int?
-  schema             Json                @default("[]")
-  metadata           Json                @default("{}")
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  source             DataSource?          @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  sourceId String? @db.Uuid
+  name String @db.VarChar(180)
+  fullyQualifiedName String @db.VarChar(512)
+  description String? @db.Text
+  assetType String @db.VarChar(40)
+  ownerName String? @db.VarChar(120)
+  classification DataClassification @default(INTERNAL)
+  rowCount Int?
+  schema Json @default("[]")
+  metadata Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  source DataSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  qualityRules QualityRule[]
+  qualityRuns QualityRun[]
+  upstreamEdges LineageEdge[] @relation("LineageUpstream")
+  downstreamEdges LineageEdge[] @relation("LineageDownstream")
   @@unique([organizationId, fullyQualifiedName])
   @@index([organizationId, assetType, createdAt])
   @@index([organizationId, name])
   @@index([organizationId, classification])
 }
+
+model QualityRule {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  assetId String @db.Uuid
+  name String @db.VarChar(160)
+  description String? @db.Text
+  ruleType QualityRuleType
+  params Json @default("{}")
+  version Int @default(1)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  @@unique([assetId, name, version])
+  @@index([organizationId, assetId, isActive])
+}
+
+model QualityRun {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  assetId String @db.Uuid
+  score Float?
+  passedCount Int
+  failedCount Int
+  skippedCount Int
+  results Json
+  executedAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  @@index([organizationId, assetId, executedAt])
+}
+
+model LineageEdge {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  upstreamAssetId String @db.Uuid
+  downstreamAssetId String @db.Uuid
+  relationship String @default("DERIVES_FROM") @db.VarChar(40)
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  upstreamAsset DataAsset @relation("LineageUpstream", fields: [upstreamAssetId], references: [id], onDelete: Cascade)
+  downstreamAsset DataAsset @relation("LineageDownstream", fields: [downstreamAssetId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, upstreamAssetId, downstreamAssetId])
+  @@index([organizationId, upstreamAssetId])
+  @@index([organizationId, downstreamAssetId])
 }
