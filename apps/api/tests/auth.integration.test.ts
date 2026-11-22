@@ -126,6 +126,8 @@ describe("identity and tenant security", () => {
     const firstSourcePage = await client.get("/api/catalog/sources?q=Finance&limit=1")
       .set("x-organization-id", organizationId).expect(200);
     expect(firstSourcePage.body.data.sources).toHaveLength(1);
+    expect(firstSourcePage.body.data.totalCount).toBe(2);
+    expect(firstSourcePage.body.data.sources[0]).not.toHaveProperty("metadata");
     expect(firstSourcePage.body.data.pagination.hasMore).toBe(true);
     const secondSourcePage = await client.get(`/api/catalog/sources?q=Finance&limit=1&cursor=${firstSourcePage.body.data.pagination.nextCursor}`)
       .set("x-organization-id", organizationId).expect(200);
