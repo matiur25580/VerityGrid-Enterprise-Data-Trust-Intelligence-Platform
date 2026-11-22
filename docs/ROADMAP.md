@@ -46,7 +46,7 @@
 - [x] Governance policies and approval request/decision workflow
 - [x] Append-only audit event API and notification provider abstraction (delivery disabled until configured)
 - [x] Operations Center UI for incidents, approvals, queue activity and dead letters
-- [ ] Full API integration suite, generated Prisma client, migration and build verification
+- [x] Freshness, analytics, export, evidence-insight and approval-gated action integration scenarios authored\n- [x] CSV spreadsheet-formula injection mitigation and regression coverage\n- [ ] Execute full API integration suite, generate Prisma client, apply migrations and verify builds
 
 ## Phase 6 — Reliability and intelligence
 - [x] Dataset observation timestamps and tenant-scoped freshness SLA policies
