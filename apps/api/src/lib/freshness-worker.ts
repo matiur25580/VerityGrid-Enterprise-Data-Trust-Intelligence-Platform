@@ -1,7 +1,7 @@
 import { Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import { prisma } from "./prisma";
-import { notificationProvider } from "./notifications";
+import { enqueueIncidentNotification } from "./notifications";
 
 const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379", { maxRetriesPerRequest: null, enableReadyCheck: true });
 const queue = new Queue("veritygrid-freshness-sla", { connection, defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5000 }, removeOnComplete: { age: 86400, count: 200 }, removeOnFail: false } });
@@ -61,7 +61,7 @@ export async function processFreshnessEvaluation(now = new Date()) {
       if (transition.changed && transition.incidentId) {
         if (nextStatus === "OPEN") {
           opened++;
-          if (transition.created || severity === "HIGH") await notificationProvider.incidentCreated({ organizationId: policy.organizationId, incidentId: transition.incidentId, severity });
+          if (transition.created || severity === "HIGH") await enqueueIncidentNotification({ organizationId: policy.organizationId, incidentId: transition.incidentId, severity, eventKey: transition.created ? "freshness-opened" : "freshness-escalated-" + severity.toLowerCase() });
         } else recovered++;
       }
     }
