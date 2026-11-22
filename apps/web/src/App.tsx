@@ -218,6 +218,7 @@ function App() {
 
           <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Your account is authenticated and your organization membership has been verified.</p></div><span className="strip-status"><i/> Secure session</span></div>
 
+          {activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : <>
           <div className="section-heading"><div><h2>Platform health</h2><p>Operational indicators from your workspace</p></div><span className="updated">API {apiStatus === "online" ? "connected" : apiStatus === "offline" ? "unavailable" : "checking"} <i className={apiStatus}/></span></div>
 
           <div className="metrics-grid">
@@ -233,9 +234,89 @@ function App() {
           </div>
 
           <section className="panel onboarding-panel"><div><div className="eyebrow">GETTING STARTED</div><h3>Bring your first dataset into focus</h3><p>Follow the initial setup path to establish a measurable data reliability baseline.</p></div><div className="setup-steps"><div className="setup-step"><span>01</span><div><b>Register a data source</b><small>Connect PostgreSQL or import a CSV file.</small></div><ArrowUpRight size={16}/></div><div className="setup-step"><span>02</span><div><b>Catalog your first asset</b><small>Document ownership, schema and purpose.</small></div><ArrowUpRight size={16}/></div><div className="setup-step"><span>03</span><div><b>Run quality checks</b><small>Validate completeness, uniqueness and freshness.</small></div><ArrowUpRight size={16}/></div></div></section>
+          </>}
           <footer>VERITYGRID <span>·</span> Enterprise Data Trust Platform <span className="footer-right">Signed in as {user.email}</span></footer>
         </section>
       </main>
+    </div>
+  );
+}
+
+
+function DataCatalogPage({ organizationId }: { organizationId: string }) {
+  const [assets, setAssets] = useState<any[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [classification, setClassification] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const loadCatalog = useCallback(async () => {
+    if (!organizationId) return;
+    const headers = { "x-organization-id": organizationId };
+    const [assetResult, sourceResult] = await Promise.all([
+      api<{ data: { assets: any[] } }>(`/api/catalog/assets?q=${encodeURIComponent(search)}${classification ? `&classification=${classification}` : ""}`, { headers }),
+      api<{ data: { sources: any[] } }>("/api/catalog/sources", { headers }),
+    ]);
+    setAssets(assetResult.data.assets);
+    setSources(sourceResult.data.sources);
+  }, [organizationId, search, classification]);
+
+  useEffect(() => {
+    let active = true;
+    void loadCatalog().catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Catalog could not be loaded."); });
+    return () => { active = false; };
+  }, [loadCatalog]);
+
+  async function createSource(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true); setError(""); setMessage("");
+    const form = new FormData(event.currentTarget);
+    try {
+      await api("/api/catalog/sources", {
+        method: "POST",
+        headers: { "x-organization-id": organizationId },
+        body: JSON.stringify({ name: String(form.get("sourceName") ?? "").trim(), sourceType: String(form.get("sourceType") ?? "POSTGRESQL"), description: String(form.get("sourceDescription") ?? "").trim() }),
+      });
+      event.currentTarget.reset();
+      setMessage("Data source registered.");
+      await loadCatalog();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not register source."); }
+    finally { setBusy(false); }
+  }
+
+  async function importFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      if (file.size > 900_000) throw new Error("Choose a file smaller than 900 KB.");
+      const content = await file.text();
+      const format = file.name.toLowerCase().endsWith(".csv") ? "CSV" : file.name.toLowerCase().endsWith(".json") ? "JSON" : "";
+      if (!format) throw new Error("Only .csv and .json files are supported.");
+      await api("/api/catalog/assets/import", {
+        method: "POST",
+        headers: { "x-organization-id": organizationId },
+        body: JSON.stringify({ name: file.name.replace(/\.(csv|json)$/i, ""), format, content }),
+      });
+      setMessage(`${file.name} imported successfully.`);
+      await loadCatalog();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Import failed."); }
+    finally { setBusy(false); event.currentTarget.value = ""; }
+  }
+
+  return (
+    <div className="catalog-page">
+      <div className="catalog-intro"><div><div className="eyebrow">DISCOVER & GOVERN</div><h2>Data catalog</h2><p>Register sources, import structured files and explore automatically discovered dataset schemas.</p></div><label className="catalog-import-button">{busy ? "Working…" : "Import CSV / JSON"}<input type="file" accept=".csv,.json,application/json,text/csv" onChange={(event) => void importFile(event)} disabled={busy}/></label></div>
+      {message && <div className="inline-notice"><CheckCircle2 size={15}/>{message}</div>}
+      {error && <div className="inline-error">{error}<button onClick={() => setError("")}>Dismiss</button></div>}
+      <div className="catalog-stats"><div className="panel"><span>REGISTERED ASSETS</span><b>{assets.length}</b></div><div className="panel"><span>DATA SOURCES</span><b>{sources.length}</b></div><div className="panel"><span>CLASSIFIED DATASETS</span><b>{assets.filter((asset) => asset.classification !== "INTERNAL").length}</b></div></div>
+      <section className="panel catalog-register"><div className="panel-heading"><div><h3>Register a data source</h3><p>Save a source in this workspace. Credentials are intentionally not collected in this registry form.</p></div></div><form onSubmit={createSource}><input name="sourceName" placeholder="Source name (e.g. Finance Warehouse)" minLength={2} maxLength={160} required/><select name="sourceType" defaultValue="POSTGRESQL"><option value="POSTGRESQL">PostgreSQL</option><option value="CSV">CSV collection</option><option value="JSON">JSON collection</option></select><input name="sourceDescription" placeholder="Description (optional)" maxLength={2000}/><button type="submit" disabled={busy}>{busy ? "Saving…" : "Register source"}</button></form></section>
+      <section className="panel catalog-assets"><div className="panel-heading"><div><h3>Cataloged datasets</h3><p>Search by dataset name, fully qualified name or owner.</p></div><span className="catalog-count">{assets.length} shown · max 100</span></div><div className="catalog-filters"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search datasets…"/><select value={classification} onChange={(event) => setClassification(event.target.value)}><option value="">All classifications</option><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="RESTRICTED">Restricted</option></select></div>
+        {assets.length ? <div className="catalog-table-wrap"><table className="catalog-table"><thead><tr><th>DATASET</th><th>SOURCE</th><th>ROWS</th><th>FIELDS</th><th>CLASSIFICATION</th><th>OWNER</th></tr></thead><tbody>{assets.map((asset) => <tr key={asset.id}><td><b>{asset.name}</b><small>{asset.fullyQualifiedName}</small></td><td>{asset.source?.name ?? "Manual"}</td><td>{asset.rowCount ?? "—"}</td><td>{Array.isArray(asset.schema) ? asset.schema.length : 0}</td><td><span className={`classification-tag ${String(asset.classification).toLowerCase()}`}>{asset.classification}</span></td><td>{asset.ownerName ?? "Unassigned"}</td></tr>)}</tbody></table></div> : <div className="catalog-empty"><Database size={24}/><b>No datasets cataloged yet</b><p>Register a source or import a CSV/JSON file to create your first dataset and discover its schema.</p></div>}
+      </section>
+      <section className="panel catalog-sources"><div className="panel-heading"><div><h3>Registered sources</h3><p>Organization-scoped source registry</p></div></div>{sources.length ? sources.map((source) => <div className="source-row" key={source.id}><div className="source-icon"><Database size={17}/></div><div><b>{source.name}</b><small>{source.description || source.sourceType}</small></div><span>{source._count?.assets ?? 0} assets</span></div>) : <p className="catalog-source-empty">No source connections registered.</p>}</section>
     </div>
   );
 }
