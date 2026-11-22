@@ -11,6 +11,7 @@ import { organizationsRouter } from "./routes/organizations";
 import { catalogRouter } from "./routes/catalog";
 import { qualityRouter } from "./routes/quality";
 import { operationsRouter } from "./routes/operations";
+import { reliabilityRouter } from "./routes/reliability";
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/api/organizations", organizationsRouter);
 app.use("/api/catalog", catalogRouter);
 app.use("/api/quality", qualityRouter);
 app.use("/api/operations", operationsRouter);
+app.use("/api/reliability", reliabilityRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
