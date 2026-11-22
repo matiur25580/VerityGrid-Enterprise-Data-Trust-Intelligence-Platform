@@ -332,6 +332,7 @@ The following are intentionally explicit so that product claims remain evidence-
 - [Development Roadmap](docs/ROADMAP.md)
 - [Security Baseline](docs/SECURITY.md)
 - [Production Readiness and Operations](docs/PRODUCTION_READINESS.md)
+- [Frontend Resilience](docs/FRONTEND_RESILIENCE.md)
 - [Authentication API](docs/API_AUTHENTICATION.md)
 - [Data Catalog API](docs/DATA_CATALOG.md)
 - [Quality and Lineage API](docs/QUALITY_LINEAGE.md)
