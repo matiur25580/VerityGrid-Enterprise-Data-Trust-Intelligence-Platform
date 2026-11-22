@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  DATA_STEWARD
+  DATA_ENGINEER
+  ANALYST
+  VIEWER
+}
+
+model Organization {
+  id          String               @id @default(uuid()) @db.Uuid
+  name        String               @db.VarChar(160)
+  slug        String               @unique @db.VarChar(80)
+  status      OrganizationStatus  @default(ACTIVE)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  memberships Membership[]
+  dataAssets  DataAsset[]
+
+  @@index([status, createdAt])
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique @db.VarChar(254)
+  passwordHash String       @db.VarChar(255)
+  displayName  String       @db.VarChar(120)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+}
+
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  userId         String         @db.Uuid
+  role           MembershipRole @default(VIEWER)
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId, role])
+  @@index([organizationId, role])
+}
+
+model DataAsset {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String       @db.VarChar(180)
+  fullyQualifiedName String   @db.VarChar(512)
+  description    String?      @db.Text
+  assetType      String       @db.VarChar(40)
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, fullyQualifiedName])
+  @@index([organizationId, assetType, createdAt])
+  @@index([organizationId, name])
+}
