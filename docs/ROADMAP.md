@@ -79,6 +79,7 @@
 - [x] PostgreSQL custom-format backup and guarded restore utilities with SHA-256 verification
 - [x] Production readiness, release, backup and recovery runbook
 - [ ] Commit reproducible dependency lockfile and verify clean installs
+- [x] Add manual GitHub Actions workflow to generate, clean-install verify and propose the lockfile via pull request
 - [ ] Run CI and resolve all typecheck, build, migration and integration failures
 - [ ] Execute a PostgreSQL backup and restore rehearsal against an isolated database
 - [ ] Add encrypted off-site backup automation and scheduled restore verification
