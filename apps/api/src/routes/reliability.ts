@@ -85,6 +85,50 @@ reliabilityRouter.get("/analytics", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
+  try {
+    const parsed = z.coerce.number().int().min(7).max(90).default(30).safeParse(req.query.days);
+    if (!parsed.success) { res.status(400).json({ error: { code: "INVALID_TREND_WINDOW", message: "Choose a trend window from 7 to 90 days." } }); return; }
+    const organizationId = req.tenant!.organizationId;
+    const days = parsed.data;
+    const end = new Date();
+    end.setUTCHours(0, 0, 0, 0);
+    const start = new Date(end);
+    start.setUTCDate(start.getUTCDate() - (days - 1));
+    const [qualityRows, incidentRows] = await Promise.all([
+      prisma.$queryRaw<Array<{ day: Date; runs: number; failedRuns: number; averageScore: number | null }>>(Prisma.sql`
+        SELECT date_trunc('day', "executedAt") AS day,
+          COUNT(*)::int AS runs,
+          COUNT(*) FILTER (WHERE "failedCount" > 0)::int AS "failedRuns",
+          ROUND(AVG(score)::numeric, 2)::float8 AS "averageScore"
+        FROM "QualityRun"
+        WHERE "organizationId" = ${organizationId}::uuid AND "executedAt" >= ${start}
+        GROUP BY date_trunc('day', "executedAt") ORDER BY day ASC
+      `),
+      prisma.$queryRaw<Array<{ day: Date; incidents: number; highSeverity: number }>>(Prisma.sql`
+        SELECT date_trunc('day', "createdAt") AS day,
+          COUNT(*)::int AS incidents,
+          COUNT(*) FILTER (WHERE severity IN ('HIGH','CRITICAL'))::int AS "highSeverity"
+        FROM "Incident"
+        WHERE "organizationId" = ${organizationId}::uuid AND "createdAt" >= ${start}
+        GROUP BY date_trunc('day', "createdAt") ORDER BY day ASC
+      `),
+    ]);
+    const quality = new Map(qualityRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
+    const incident = new Map(incidentRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
+    const series = Array.from({ length: days }, (_, index) => {
+      const date = new Date(start);
+      date.setUTCDate(start.getUTCDate() + index);
+      const key = date.toISOString().slice(0, 10);
+      const q = quality.get(key);
+      const i = incident.get(key);
+      return { date: key, qualityRuns: q?.runs ?? 0, failedRuns: q?.failedRuns ?? 0, averageQualityScore: q?.averageScore ?? null, incidentsCreated: i?.incidents ?? 0, highSeverityIncidents: i?.highSeverity ?? 0 };
+    });
+    res.json({ data: { generatedAt: new Date().toISOString(), windowDays: days, from: start.toISOString(), through: end.toISOString(), source: "persisted-records", series } });
+  } catch (error) { next(error); }
+});
+
 reliabilityRouter.get("/exports", async (req, res, next) => {
   try {
     const type = z.enum(["quality-runs", "freshness"]).safeParse(req.query.type);
