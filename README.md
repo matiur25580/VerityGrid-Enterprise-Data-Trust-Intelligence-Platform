@@ -277,26 +277,79 @@ Full runbook: [Production Readiness and Operations](docs/PRODUCTION_READINESS.md
 
 ## 9. Dashboard screenshot gallery
 
-The gallery is intentionally presented in a **single-column layout**: one full-width, real dashboard capture per row, followed immediately by an editorial caption. The capture workflow targets a consistent 1440 × 1000 viewport and an authenticated synthetic demonstration workspace.
+The gallery is a single-column sequence of genuine application captures at a consistent 1440 × 1000 viewport. To publish it after your manual deployment, configure the repository Actions secrets `DEMO_EMAIL` and `DEMO_PASSWORD` with a dedicated synthetic demo account, then run **Actions → Capture dashboard showcase → Run workflow** and provide the deployed demo URL. The workflow installs Playwright, captures the live app, verifies all twelve PNGs and commits them to `main`. Never use production credentials or customer data.
 
-**Screenshot status: pending capture.** The repository contains a Playwright capture script and the twelve planned captions, but the PNG assets are not committed yet. Run the [capture checklist](docs/screenshots/README.md) against a live demo instance before publishing the gallery. Do not substitute generated mockups or fabricated metrics.
+### 1. Executive command center
 
-1. **Executive command center** — A leadership-ready snapshot of the data estate, current trust posture and operational priorities. *Pending: `01-executive-overview.png`.*
-2. **Data catalog and discovery** — A shared inventory of datasets, ownership, source metadata and classification. *Pending: `02-data-catalog.png`.*
-3. **Data contract registry** — Versioned schema expectations, ownership and explicit compatibility decisions for producer/consumer trust. *Pending: `03-data-contracts.png`.*
-4. **Lineage and impact analysis** — Upstream/downstream dependencies that help teams understand the blast radius of change. *Pending: `04-data-lineage.png`.*
-5. **Quality center** — Versioned validation rules and persisted pass/fail evidence for explainable data quality. *Pending: `05-quality-center.png`.*
-6. **Incident response** — Severity, ownership, lifecycle and event history for coordinated operational recovery. *Pending: `06-incident-response.png`.*
-7. **Governance approvals** — Policy controls and independent decisions that make consequential changes accountable. *Pending: `07-governance-approvals.png`.*
-8. **Notification delivery** — Webhook delivery state, retry controls and operational evidence for alert workflows. *Pending: `08-notification-deliveries.png`.*
-9. **Reliability overview** — A consolidated view of freshness, quality and service reliability signals. *Pending: `09-reliability-overview.png`.*
-10. **Reliability trends** — Historical quality, incident and freshness trends that reveal patterns over time. *Pending: `10-reliability-trends.png`.*
-11. **Freshness and SLA monitor** — Objective configuration and healthy, at-risk and breached freshness states. *Pending: `11-freshness-sla.png`.*
-12. **Evidence-grounded insights** — Traceable operational recommendations grounded in persisted platform evidence, not invented AI output. *Pending: `12-evidence-insights.png`.*
+![Executive command center — data estate, trust posture and operational priorities.](docs/screenshots/01-executive-overview.png)
 
-When captured, embed each PNG in numeric order with descriptive alt text, keep the image on its own line, and place its caption directly beneath it. The script and this gallery use the same filenames so the assets can be added without manual renaming.
+Executive command center — data estate, trust posture and operational priorities.
 
----
+### 2. Data catalog and discovery
+
+![Data catalog and discovery — inventory, ownership and classification.](docs/screenshots/02-data-catalog.png)
+
+Data catalog and discovery — inventory, ownership and classification.
+
+### 3. Data contract registry
+
+![Data contract registry — versioned schema expectations and compatibility evidence.](docs/screenshots/03-data-contracts.png)
+
+Data contract registry — versioned schema expectations and compatibility evidence.
+
+### 4. Lineage and impact analysis
+
+![Lineage and impact analysis — upstream/downstream dependencies and blast radius.](docs/screenshots/04-data-lineage.png)
+
+Lineage and impact analysis — upstream/downstream dependencies and blast radius.
+
+### 5. Quality center
+
+![Quality center — validation rules and persisted quality evidence.](docs/screenshots/05-quality-center.png)
+
+Quality center — validation rules and persisted quality evidence.
+
+### 6. Incident response
+
+![Incident response — severity, ownership, lifecycle and event history.](docs/screenshots/06-incident-response.png)
+
+Incident response — severity, ownership, lifecycle and event history.
+
+### 7. Governance approvals
+
+![Governance approvals — policy controls and independent decisions.](docs/screenshots/07-governance-approvals.png)
+
+Governance approvals — policy controls and independent decisions.
+
+### 8. Notification delivery
+
+![Notification delivery — webhook state, retry controls and delivery evidence.](docs/screenshots/08-notification-deliveries.png)
+
+Notification delivery — webhook state, retry controls and delivery evidence.
+
+### 9. Reliability overview
+
+![Reliability overview — freshness, quality and service reliability signals.](docs/screenshots/09-reliability-overview.png)
+
+Reliability overview — freshness, quality and service reliability signals.
+
+### 10. Reliability trends
+
+![Reliability trends — historical quality, incident and freshness patterns.](docs/screenshots/10-reliability-trends.png)
+
+Reliability trends — historical quality, incident and freshness patterns.
+
+### 11. Freshness and SLA monitor
+
+![Freshness and SLA monitor — objectives and healthy, at-risk and breached states.](docs/screenshots/11-freshness-sla.png)
+
+Freshness and SLA monitor — objectives and healthy, at-risk and breached states.
+
+### 12. Evidence-grounded insights
+
+![Evidence-grounded insights — traceable recommendations grounded in persisted evidence.](docs/screenshots/12-evidence-insights.png)
+
+Evidence-grounded insights — traceable recommendations grounded in persisted evidence.
 
 ## 10. Enterprise roadmap: next high-value capabilities
 
