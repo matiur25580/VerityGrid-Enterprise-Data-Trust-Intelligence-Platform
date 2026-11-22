@@ -2,6 +2,8 @@ import "dotenv/config";
 import { app } from "./app";
 import { prisma } from "./lib/prisma";
 import { closeQualityQueues } from "./lib/quality-worker";
+import { closeFreshnessWorker } from "./lib/freshness-worker";
+import { closeNotificationQueue } from "./lib/notifications";
 
 const port = Number(process.env.PORT ?? 4000);
 
@@ -20,9 +22,18 @@ const shutdown = (signal: string) => {
       console.error("HTTP server shutdown failed.", error);
       process.exitCode = 1;
     }
-    try { await closeQualityQueues(); await prisma.$disconnect(); } catch (shutdownError) { console.error("Dependency shutdown failed.", shutdownError); process.exitCode = 1; }
+    try {
+      await Promise.all([closeQualityQueues(), closeFreshnessWorker(), closeNotificationQueue()]);
+      await prisma.$disconnect();
+    } catch (shutdownError) {
+      console.error("Dependency shutdown failed.", { requestId: responseRequestId(), errorCode: shutdownError instanceof Error ? shutdownError.name : "UNKNOWN" });
+      process.exitCode = 1;
+    }
   });
 };
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+let shuttingDown = false;
+function responseRequestId() { return "shutdown"; }
+const beginShutdown = (signal: string) => { if (shuttingDown) return; shuttingDown = true; shutdown(signal); };
+process.on("SIGINT", () => beginShutdown("SIGINT"));
+process.on("SIGTERM", () => beginShutdown("SIGTERM"));
