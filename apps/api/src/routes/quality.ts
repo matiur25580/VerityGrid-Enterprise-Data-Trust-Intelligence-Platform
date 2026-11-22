@@ -248,6 +248,6 @@ qualityRouter.get("/assets/:assetId/lineage", async (req, res, next) => {
       where: { organizationId, id: { in: [...impacted] } },
       select: { id: true, name: true, fullyQualifiedName: true },
     }) : [];
-    res.json({ data: { asset: { id: asset.id, name: asset.name }, upstream, downstream, impactedAssets, impactCount: impactedAssets.length, impactTruncated: impacted.size >= 500 } });
+    res.json({ data: { asset: { id: asset.id, name: asset.name }, upstream, downstream, impactedAssets, impactCount: impactedAssets.length, impactTruncated: impacted.size >= 500 || allEdges.length >= 5000 } });
   } catch (error) { next(error); }
 });
