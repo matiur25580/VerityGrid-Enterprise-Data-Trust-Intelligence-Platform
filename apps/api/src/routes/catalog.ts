@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
@@ -104,7 +105,7 @@ catalogRouter.post("/assets", requireRoles("OWNER", "ADMIN", "DATA_STEWARD", "DA
       }
     }
     const asset = await prisma.dataAsset.create({
-      data: { ...parsed.data, organizationId: req.tenant!.organizationId, schema: parsed.data.schema },
+      data: { ...parsed.data, organizationId: req.tenant!.organizationId, schema: parsed.data.schema as Prisma.InputJsonValue },
     });
     res.status(201).json({ data: { asset } });
   } catch (error: any) {
@@ -220,8 +221,8 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         classification: input.classification,
         assetType: "DATASET",
         rowCount: records.length,
-        schema: columns,
-        metadata: { importFormat: input.format, sample: records.slice(0, 5) },
+        schema: columns as Prisma.InputJsonValue,
+        metadata: { importFormat: input.format, sample: records.slice(0, 5) } as Prisma.InputJsonValue,
       },
     });
     res.status(201).json({ data: { asset, importedRows: records.length, discoveredColumns: columns.length } });
