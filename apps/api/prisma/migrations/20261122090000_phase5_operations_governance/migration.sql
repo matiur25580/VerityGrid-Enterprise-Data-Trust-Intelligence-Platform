@@ -24,3 +24,5 @@ CREATE UNIQUE INDEX "IncidentEvent_sourceKey_key" ON "IncidentEvent"("sourceKey"
 
 ALTER TABLE "AuditEvent" ADD COLUMN "sourceKey" VARCHAR(180);
 CREATE UNIQUE INDEX "AuditEvent_sourceKey_key" ON "AuditEvent"("sourceKey");
+
+ALTER TABLE "GovernanceApproval" ADD COLUMN "requestDescription" VARCHAR(4000) NOT NULL DEFAULT 'Review requested';
