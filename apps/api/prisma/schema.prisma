@@ -52,6 +52,7 @@ model Organization {
   qualityRuns QualityRun[]
   lineageEdges LineageEdge[]
   freshnessPolicies FreshnessPolicy[]
+  freshnessSnapshots FreshnessSnapshot[]
   @@index([status, createdAt])
 }
 
@@ -128,6 +129,7 @@ model DataAsset {
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
   freshnessPolicy FreshnessPolicy?
+  freshnessSnapshots FreshnessSnapshot[]
   upstreamEdges LineageEdge[] @relation("LineageUpstream")
   downstreamEdges LineageEdge[] @relation("LineageDownstream")
   @@unique([organizationId, fullyQualifiedName])
@@ -148,6 +150,22 @@ model FreshnessPolicy {
   asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
   @@unique([organizationId, assetId])
   @@index([organizationId, targetMinutes])
+}
+
+model FreshnessSnapshot {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  assetId String @db.Uuid
+  snapshotDate DateTime @db.Date
+  status String @db.VarChar(16)
+  ageMinutes Int?
+  targetMinutes Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, assetId, snapshotDate])
+  @@index([organizationId, snapshotDate])
 }
 
 model QualityRule {
