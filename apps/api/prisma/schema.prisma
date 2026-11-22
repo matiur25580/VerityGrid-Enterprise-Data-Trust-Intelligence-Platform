@@ -63,7 +63,6 @@ model Organization {
   dataAssets DataAsset[]
   dataSources DataSource[]
   dataContracts DataContract[]
-  dataContracts DataContract[]
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
   lineageEdges LineageEdge[]
@@ -142,6 +141,7 @@ model DataAsset {
   lastObservedAt DateTime?
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   source DataSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  dataContracts DataContract[]
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
   freshnessPolicy FreshnessPolicy?
