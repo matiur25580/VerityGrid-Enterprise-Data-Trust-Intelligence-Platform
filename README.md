@@ -28,6 +28,8 @@ The product is designed around a practical enterprise question: *Can teams trust
 - Background validation using Redis and BullMQ.
 - Retry policies, idempotent job keys and dead-letter retention.
 - Tenant-scoped lineage graph, cycle prevention and bounded downstream impact analysis.
+- **Versioned data contract registry** with immutable schema baselines, named ownership and draft/active/retired lifecycle.
+- Backward-compatible and strict schema compatibility evaluation with persisted results for removed fields, type changes, nullability broadening and additive fields.
 - Imported raw CSV/JSON rows are not retained; validation uses persisted profiling aggregates and schema evidence.
 
 ### Reliability intelligence
@@ -281,7 +283,7 @@ The requested gallery is designed as a **single vertical column of 12 full-width
 1. **Executive workspace overview** — Bring the data estate, quality posture and operational priorities into one leadership-ready view. *Capture pending — `01-executive-overview.png`.*
 2. **Data catalog and discovery** — Show the searchable inventory, ownership and classification model that gives teams a shared source of truth. *Capture pending — `02-data-catalog.png`.*
 3. **Dataset profile and schema** — Reveal field-level structure and profiling evidence so engineers can assess completeness and shape. *Capture pending — `03-dataset-profile.png`.*
-4. **Quality rule management** — Demonstrate versioned validation expectations and active rules as executable data contracts. *Capture pending — `04-quality-rules.png`.*
+4. **Data contract registry** — Demonstrate versioned schema baselines, explicit compatibility policy and accountable ownership for producer/consumer expectations. *Capture pending — `04-data-contracts.png`.*
 5. **Quality execution results** — Present a persisted validation run with clear pass, fail and skipped evidence. *Capture pending — `05-quality-results.png`.*
 6. **Lineage and impact analysis** — Visualize upstream/downstream relationships and the blast radius of a data change. *Capture pending — `06-lineage-impact.png`.*
 7. **Background processing operations** — Highlight queue activity, retry behavior and dead-letter visibility for resilient workloads. *Capture pending — `07-processing-operations.png`.*
@@ -313,6 +315,7 @@ The following are intentionally explicit so that product claims remain evidence-
 
 - [x] Multi-tenant identity and workspace access
 - [x] Catalog, profiling, quality validation and lineage
+- [ ] Versioned data contract registry and schema compatibility evaluation (implementation on feature PR; CI/review pending)
 - [x] Incident lifecycle, governance approvals and audit records
 - [x] Freshness SLAs, historical trends and evidence-linked insights
 - [x] Retryable webhook notification foundation and Operations Center visibility
@@ -338,6 +341,7 @@ The following are intentionally explicit so that product claims remain evidence-
 - [Reproducible Dependency Installation](docs/DEPENDENCY_LOCKFILE.md)
 - [Authentication API](docs/API_AUTHENTICATION.md)
 - [Data Catalog API](docs/DATA_CATALOG.md)
+- [Data Contract Registry and Schema Compatibility](docs/DATA_CONTRACTS.md)
 - [Quality and Lineage API](docs/QUALITY_LINEAGE.md)
 - [Operations and Governance API](docs/OPERATIONS_GOVERNANCE.md)
 - [Reliability and Intelligence](docs/RELIABILITY_INTELLIGENCE.md)
