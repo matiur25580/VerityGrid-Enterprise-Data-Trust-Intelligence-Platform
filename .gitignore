@@ -13,3 +13,4 @@ coverage/
 apps/api/src/generated/
 apps/api/prisma/*.db
 /backups/
+*.tsbuildinfo
