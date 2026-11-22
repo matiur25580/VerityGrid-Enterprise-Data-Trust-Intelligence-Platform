@@ -53,7 +53,7 @@ catalogRouter.get("/assets", async (req, res, next) => {
       classification: classification.optional(),
       sourceId: z.string().uuid().optional(),
       cursor: z.string().uuid().optional(),
-      limit: z.coerce.number().int().min(1).max(100).default(50),
+      limit: z.coerce.number().int().min(1).max(100).default(100),
     }).safeParse(req.query);
     if (!query.success) {
       res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid catalog filters or pagination parameters." } });
