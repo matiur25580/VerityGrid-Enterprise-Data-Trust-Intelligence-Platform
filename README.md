@@ -55,7 +55,7 @@ The API defaults to `http://localhost:4000`; the web application defaults to `ht
 - [Architecture](docs/ARCHITECTURE.md)
 - [Development roadmap](docs/ROADMAP.md)
 - [Security baseline](docs/SECURITY.md)
-- [Authentication API](docs/API_AUTHENTICATION.md)\n- [Data Catalog API](docs/DATA_CATALOG.md)
+- [Authentication API](docs/API_AUTHENTICATION.md)\n- [Data Catalog API](docs/DATA_CATALOG.md)\n- [Quality & Lineage API](docs/QUALITY_LINEAGE.md)
 
 ## Scope note
 VerityGrid is an engineering portfolio project, not a certified compliance product or a substitute for specialist legal, privacy, or security advice. Production use requires environment-specific security review, operational configuration, load testing, backups, and deployment verification.
