@@ -3,11 +3,11 @@ import cors from "cors";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
+import { originGuard } from "./middleware/origin-guard";
+import { errorHandler } from "./middleware/error-handler";
 import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
 import { organizationsRouter } from "./routes/organizations";
-import { errorHandler } from "./middleware/error-handler";
-import { originGuard } from "./middleware/origin-guard";
 
 const app = express();
 
@@ -37,7 +37,9 @@ const authLimiter = rateLimit({
 });
 
 app.use("/api/health", healthRouter);
-app.use("/api/auth", authLimiter, authRouter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth", authRouter);
 app.use("/api/organizations", organizationsRouter);
 
 app.use((_request, response) => {
