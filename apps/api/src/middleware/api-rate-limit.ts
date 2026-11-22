@@ -11,7 +11,7 @@ export function createApiRateLimiter(limit = 300, namespace = "api") {
     limit,
     // Authentication endpoints have their own stricter limiter in app.ts.
     // Avoid counting the same request in both limiters.
-    skip: (request) => /^\\/auth\\/(?:register|login)$/.test(request.path),
+    skip: (request) => request.path.startsWith("/auth/register") || request.path.startsWith("/auth/login"),
     standardHeaders: "draft-7",
     legacyHeaders: false,
     store: new RedisRateLimitStore(namespace),
