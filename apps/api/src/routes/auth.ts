@@ -116,6 +116,44 @@ authRouter.post("/login", async (request, response, next) => {
   }
 });
 
+authRouter.post("/sessions/rotate", authenticate, async (request, response, next) => {
+  try {
+    if (!request.auth) {
+      response.status(401).json({ error: { code: "UNAUTHENTICATED", message: "Authentication is required." } });
+      return;
+    }
+
+    const token = createSessionToken();
+    const now = new Date();
+    const rotated = await prisma.$transaction(async (tx) => {
+      const revoked = await tx.session.updateMany({
+        where: { id: request.auth?.sessionId, revokedAt: null, expiresAt: { gt: now } },
+        data: { revokedAt: now },
+      });
+      if (revoked.count !== 1) return false;
+      await tx.session.create({
+        data: {
+          userId: request.auth?.userId as string,
+          tokenHash: hashSessionToken(token),
+          expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+        },
+      });
+      return true;
+    });
+
+    if (!rotated) {
+      clearSessionCookie(response);
+      response.status(401).json({ error: { code: "SESSION_INVALID", message: "The session could not be renewed." } });
+      return;
+    }
+
+    setSessionCookie(response, token);
+    response.status(200).json({ data: { message: "Session renewed." } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 authRouter.post("/logout", authenticate, async (request, response, next) => {
   try {
     if (request.auth) {
