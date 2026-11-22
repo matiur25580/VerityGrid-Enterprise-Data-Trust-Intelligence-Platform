@@ -13,7 +13,7 @@ const classification = z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : value instanceof Date ? value.toISOString() : String(value);
-  const safe = /^[\\s]*[=+\\-@]/.test(text) ? "'" + text : text;
+  const safe = /^\s*[=+\-@]/.test(text) ? "'" + text : text;
   return '"' + safe.replace(/"/g, '""') + '"';
 }
 function freshnessStatus(lastObservedAt: Date | null, targetMinutes: number, warnAtPercent: number, now: Date) {
@@ -81,7 +81,7 @@ reliabilityRouter.get("/analytics", async (req, res, next) => {
       averageQualityScore: runAggregate._avg.score === null ? null : Number(runAggregate._avg.score.toFixed(2)),
       incidentsByStatus: Object.fromEntries(incidentGroups.map(g => [g.status, g._count._all])),
       freshness: { monitored: freshness.length, healthy: freshness.filter(x => x.status === "HEALTHY").length, atRisk: freshness.filter(x => x.status === "AT_RISK").length, breached: freshness.filter(x => x.status === "BREACHED").length, unknown: freshness.filter(x => x.status === "UNKNOWN").length },
-    } } });
+    } });
   } catch (error) { next(error); }
 });
 
@@ -160,8 +160,7 @@ reliabilityRouter.get("/exports", async (req, res, next) => {
       const now = new Date();
       rows = assets.map(a => { const status = a.freshnessPolicy ? freshnessStatus(a.lastObservedAt,a.freshnessPolicy.targetMinutes,a.freshnessPolicy.warnAtPercent,now) : {status:"UNCONFIGURED",ageMinutes:null,targetMinutes:null}; return [a.id,a.name,a.lastObservedAt,status.status,status.ageMinutes,status.targetMinutes]; });
     }
-    const csv = [headers, ...(rows as unknown[][])].map(row => row.map(csvCell).join(",")).join("\r
-");
+    const csv = [headers, ...(rows as unknown[][])].map(row => row.map(csvCell).join(",")).join("\r\n");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="veritygrid-${type.data}-${new Date().toISOString().slice(0,10)}.csv"`);
     res.send(csv);

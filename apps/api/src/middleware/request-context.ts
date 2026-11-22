@@ -8,6 +8,8 @@ import type { RequestHandler } from "express";
 export const requestContext: RequestHandler = (request, response, next) => {
   const requestId = randomUUID();
   const startedAt = Date.now();
+  // Capture before Express mount points temporarily rewrite request.url.
+  const path = request.path;
   response.setHeader("x-request-id", requestId);
   response.on("finish", () => {
     console.info(JSON.stringify({
@@ -15,7 +17,7 @@ export const requestContext: RequestHandler = (request, response, next) => {
       event: "http.request.completed",
       requestId,
       method: request.method,
-      path: request.path,
+      path,
       statusCode: response.statusCode,
       durationMs: Math.max(0, Date.now() - startedAt),
       timestamp: new Date().toISOString(),

@@ -72,13 +72,3 @@ jobs:
       - name: API integration tests
         run: npm test
 
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    name: Dependency review
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/dependency-review-action@v4

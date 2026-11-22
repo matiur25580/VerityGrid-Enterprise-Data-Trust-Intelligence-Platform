@@ -8,8 +8,9 @@ organizationsRouter.use(authenticate);
 
 organizationsRouter.get("/", async (request, response, next) => {
   try {
+    if (!request.auth) { response.status(401).json({ error: { code: "UNAUTHENTICATED", message: "Authentication is required." } }); return; }
     const memberships = await prisma.membership.findMany({
-      where: { userId: request.auth?.userId, organization: { status: "ACTIVE" } },
+      where: { userId: request.auth.userId, organization: { status: "ACTIVE" } },
       select: {
         role: true,
         organization: { select: { id: true, name: true, slug: true, createdAt: true } },

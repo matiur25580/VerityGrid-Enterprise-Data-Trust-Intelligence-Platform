@@ -65,7 +65,9 @@ export async function processFreshnessEvaluation(now = new Date()) {
         } else recovered++;
       }
     }
-    cursor = policies[policies.length - 1].id;
+    const lastPolicy = policies.at(-1);
+    if (!lastPolicy) break;
+    cursor = lastPolicy.id;
     if (policies.length < PAGE_SIZE) break;
   }
   return { evaluated, opened, recovered, evaluatedAt: now.toISOString() };

@@ -125,17 +125,18 @@ authRouter.post("/sessions/rotate", authenticate, async (request, response, next
       return;
     }
 
+    const auth = request.auth;
     const token = createSessionToken();
     const now = new Date();
     const rotated = await prisma.$transaction(async (tx) => {
       const revoked = await tx.session.updateMany({
-        where: { id: request.auth?.sessionId, revokedAt: null, expiresAt: { gt: now } },
+        where: { id: auth.sessionId, revokedAt: null, expiresAt: { gt: now } },
         data: { revokedAt: now },
       });
       if (revoked.count !== 1) return false;
       await tx.session.create({
         data: {
-          userId: request.auth?.userId as string,
+          userId: auth.userId,
           tokenHash: hashSessionToken(token),
           expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
         },
