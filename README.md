@@ -3,7 +3,7 @@
 
 VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and governing enterprise data assets. It is designed around a practical data-reliability lifecycle: register a source, catalog its assets, define quality expectations, execute checks, investigate incidents, and preserve an auditable record of decisions.
 
-> **Status:** Foundation, identity/tenant-security API, React authentication experience and Phase 3 data catalog plus Phase 4 quality/lineage implementation are committed. Dependency installation, database migration generation/application, builds and automated tests have not yet been run; do not treat this as deployment-ready.
+> **Status:** Foundation, identity/tenant-security API, data catalog, quality/lineage and Phase 5 operations/governance implementation are committed. Phase 5 dependencies, Prisma migration, builds and automated tests have not yet been executed; do not treat this as deployment-ready.
 
 ## Product principles
 - **Evidence over decoration:** metrics must come from persisted records and executed checks, never hardcoded claims.
@@ -16,7 +16,7 @@ VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and
 - React + TypeScript + Vite
 - Node.js + Express + TypeScript
 - PostgreSQL + Prisma
-- Redis + BullMQ (planned worker infrastructure)
+- Redis + BullMQ (background quality validation, retries and dead-letter retention)
 - Docker Compose for local dependencies
 - Vitest, Supertest and Playwright (planned test layers; not yet configured)
 
