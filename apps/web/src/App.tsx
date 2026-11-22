@@ -218,7 +218,7 @@ function App() {
 
           <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Your account is authenticated and your organization membership has been verified.</p></div><span className="strip-status"><i/> Secure session</span></div>
 
-          {activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : <>
+          {activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Quality Center" ? <QualityCenterPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Lineage" ? <DataLineagePage organizationId={activeWorkspace?.id ?? ""} /> : <>
           <div className="section-heading"><div><h2>Platform health</h2><p>Operational indicators from your workspace</p></div><span className="updated">API {apiStatus === "online" ? "connected" : apiStatus === "offline" ? "unavailable" : "checking"} <i className={apiStatus}/></span></div>
 
           <div className="metrics-grid">
@@ -242,6 +242,150 @@ function App() {
   );
 }
 
+
+
+type CatalogAsset = { id: string; name: string; fullyQualifiedName: string; rowCount: number | null; schema: Array<{ name: string; type: string; nullable?: boolean }>; };
+type QualityRule = { id: string; name: string; ruleType: string; version: number; isActive: boolean; params: Record<string, unknown> };
+type QualityResult = { ruleId: string; name: string; version: number; ruleType: string; status: "PASSED" | "FAILED" | "SKIPPED"; detail: string; observed: unknown; expected: unknown };
+type QualityRun = { id: string; score: number | null; passedCount: number; failedCount: number; skippedCount: number; executedAt: string };
+
+function QualityCenterPage({ organizationId }: { organizationId: string }) {
+  const [assets, setAssets] = useState<CatalogAsset[]>([]);
+  const [assetId, setAssetId] = useState("");
+  const [rules, setRules] = useState<QualityRule[]>([]);
+  const [runs, setRuns] = useState<QualityRun[]>([]);
+  const [results, setResults] = useState<QualityResult[]>([]);
+  const [ruleType, setRuleType] = useState("NOT_NULL");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const headers = useMemo(() => ({ "x-organization-id": organizationId }), [organizationId]);
+  const loadAssets = useCallback(async () => {
+    const response = await api<{ data: { assets: CatalogAsset[] } }>("/api/catalog/assets", { headers });
+    setAssets(response.data.assets);
+    if (!assetId && response.data.assets[0]) setAssetId(response.data.assets[0].id);
+  }, [headers, assetId]);
+  const loadDetails = useCallback(async () => {
+    if (!assetId) { setRules([]); setRuns([]); return; }
+    const [ruleResponse, runResponse] = await Promise.all([
+      api<{ data: { rules: QualityRule[] } }>(`/api/quality/assets/${assetId}/rules`, { headers }),
+      api<{ data: { runs: QualityRun[] } }>(`/api/quality/assets/${assetId}/runs`, { headers }),
+    ]);
+    setRules(ruleResponse.data.rules);
+    setRuns(runResponse.data.runs);
+  }, [assetId, headers]);
+  useEffect(() => { void loadAssets().catch((e) => setError(e.message)); }, [loadAssets]);
+  useEffect(() => { void loadDetails().catch((e) => setError(e.message)); }, [loadDetails]);
+
+  async function createRule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("ruleName") ?? "").trim();
+    const column = String(form.get("column") ?? "").trim();
+    const params: Record<string, unknown> = {};
+    if (ruleType === "MIN_ROW_COUNT") params.minimum = Number(form.get("minimum"));
+    if (["COLUMN_EXISTS", "NOT_NULL", "MAX_NULL_PERCENT", "UNIQUE"].includes(ruleType)) params.column = column;
+    if (ruleType === "MAX_NULL_PERCENT") params.maxPercent = Number(form.get("maxPercent"));
+    setBusy(true); setError(""); setNotice("");
+    try {
+      await api(`/api/quality/assets/${assetId}/rules`, { method: "POST", headers, body: JSON.stringify({ name, ruleType, params }) });
+      setNotice("A new version of the quality rule has been saved.");
+      await loadDetails();
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not save rule."); }
+    finally { setBusy(false); }
+  }
+  async function executeRules() {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await api<{ data: { results: QualityResult[] } }>(`/api/quality/assets/${assetId}/runs`, { method: "POST", headers, body: JSON.stringify({}) });
+      setResults(response.data.results);
+      setNotice("Quality run completed and saved.");
+      await loadDetails();
+    } catch (e) { setError(e instanceof Error ? e.message : "Quality run failed."); }
+    finally { setBusy(false); }
+  }
+  const activeRules = rules.filter((rule) => rule.isActive);
+  const latest = runs[0];
+  return <div className="governance-page">
+    <div className="governance-heading"><div><div className="eyebrow">VALIDATE & MEASURE</div><h2>Quality center</h2><p>Versioned checks, reproducible executions and persisted quality scores.</p></div><span className="governance-pill">{activeRules.length} active rules</span></div>
+    {error && <div className="inline-error">{error}<button onClick={() => setError("")}>Dismiss</button></div>}
+    {notice && <div className="inline-notice"><CheckCircle2 size={15}/>{notice}</div>}
+    <section className="panel governance-panel"><div className="panel-heading"><div><h3>Choose a dataset</h3><p>Checks use stored schema and non-sensitive import aggregates.</p></div></div>
+      <select className="governance-select" value={assetId} onChange={(e) => { setAssetId(e.target.value); setResults([]); }}><option value="">Select dataset</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name} · {asset.rowCount ?? "?"} rows</option>)}</select>
+      {!assets.length && <p className="governance-empty">Import a CSV or JSON dataset in Data Catalog to begin quality validation.</p>}
+    </section>
+    {assetId && <>
+      <div className="governance-score-grid">
+        <div className="panel governance-score"><span>LATEST QUALITY SCORE</span><strong>{latest?.score === null || latest?.score === undefined ? "—" : `${latest.score}%`}</strong><small>{latest ? new Date(latest.executedAt).toLocaleString() : "No runs yet"}</small></div>
+        <div className="panel governance-score"><span>ACTIVE RULES</span><strong>{activeRules.length}</strong><small>Latest version per rule name</small></div>
+        <div className="panel governance-score"><span>LAST RUN</span><strong>{latest ? latest.failedCount : "—"}</strong><small>Failed checks</small></div>
+      </div>
+      <section className="panel governance-panel"><div className="panel-heading"><div><h3>Create validation rule</h3><p>Saving the same name creates a new version and deactivates the previous version.</p></div></div>
+        <form className="rule-form" onSubmit={(e) => void createRule(e)}>
+          <input name="ruleName" required minLength={2} maxLength={160} placeholder="Rule name"/>
+          <select value={ruleType} onChange={(e) => setRuleType(e.target.value)}><option value="NOT_NULL">Not null</option><option value="UNIQUE">Unique values</option><option value="COLUMN_EXISTS">Column exists</option><option value="MAX_NULL_PERCENT">Maximum null %</option><option value="MIN_ROW_COUNT">Minimum row count</option></select>
+          {ruleType !== "MIN_ROW_COUNT" && <select name="column" required><option value="">Select column</option>{(assets.find((a) => a.id === assetId)?.schema ?? []).map((field) => <option key={field.name} value={field.name}>{field.name}</option>)}</select>}
+          {ruleType === "MIN_ROW_COUNT" && <input name="minimum" type="number" min="0" required placeholder="Minimum rows"/>}
+          {ruleType === "MAX_NULL_PERCENT" && <input name="maxPercent" type="number" min="0" max="100" step="0.1" required placeholder="Maximum null %"/>}
+          <button type="submit" disabled={busy}>{busy ? "Saving…" : "Save rule version"}</button>
+        </form>
+      </section>
+      <section className="panel governance-panel"><div className="panel-heading"><div><h3>Validation rules</h3><p>Historical versions remain available for auditability.</p></div><button className="governance-action" onClick={() => void executeRules()} disabled={busy || activeRules.length === 0}>{busy ? "Running…" : "Run quality checks"}</button></div>
+        {rules.length ? <div className="rule-list">{rules.map((rule) => <div className="rule-row" key={rule.id}><div><b>{rule.name}</b><small>{rule.ruleType} · v{rule.version}</small></div><span className={rule.isActive ? "rule-active" : "rule-inactive"}>{rule.isActive ? "ACTIVE" : "HISTORICAL"}</span></div>)}</div> : <p className="governance-empty">No rules yet. Add a rule above.</p>}
+      </section>
+      {results.length > 0 && <section className="panel governance-panel"><div className="panel-heading"><div><h3>Latest execution results</h3><p>Passed, failed and skipped outcomes from the last run.</p></div></div>{results.map((result) => <div className="result-row" key={result.ruleId}><span className={`result-status ${result.status.toLowerCase()}`}>{result.status}</span><div><b>{result.name} · v{result.version}</b><small>{result.detail}</small></div></div>)}</section>}
+      <section className="panel governance-panel"><div className="panel-heading"><div><h3>Execution history</h3><p>Most recent 20 saved runs.</p></div></div>{runs.length ? runs.map((run) => <div className="run-row" key={run.id}><b>{run.score === null ? "Not scored" : `${run.score}%`}</b><span>{run.passedCount} passed · {run.failedCount} failed · {run.skippedCount} skipped</span><small>{new Date(run.executedAt).toLocaleString()}</small></div>) : <p className="governance-empty">No execution history yet.</p>}</section>
+    </>}
+  </div>;
+}
+
+type LineageAsset = { id: string; name: string; fullyQualifiedName: string };
+function DataLineagePage({ organizationId }: { organizationId: string }) {
+  const [assets, setAssets] = useState<LineageAsset[]>([]);
+  const [assetId, setAssetId] = useState("");
+  const [upstreamId, setUpstreamId] = useState("");
+  const [downstreamId, setDownstreamId] = useState("");
+  const [lineage, setLineage] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const headers = useMemo(() => ({ "x-organization-id": organizationId }), [organizationId]);
+  const loadAssets = useCallback(async () => {
+    const response = await api<{ data: { assets: LineageAsset[] } }>("/api/catalog/assets", { headers });
+    setAssets(response.data.assets);
+    if (!assetId && response.data.assets[0]) setAssetId(response.data.assets[0].id);
+  }, [headers, assetId]);
+  const loadLineage = useCallback(async () => {
+    if (!assetId) { setLineage(null); return; }
+    const response = await api<{ data: any }>(`/api/quality/assets/${assetId}/lineage`, { headers });
+    setLineage(response.data);
+  }, [assetId, headers]);
+  useEffect(() => { void loadAssets().catch((e) => setError(e.message)); }, [loadAssets]);
+  useEffect(() => { void loadLineage().catch((e) => setError(e.message)); }, [loadLineage]);
+  async function addDependency(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError(""); setNotice("");
+    try {
+      await api("/api/quality/lineage", { method: "POST", headers, body: JSON.stringify({ upstreamAssetId: upstreamId, downstreamAssetId: downstreamId }) });
+      setNotice("Dataset dependency recorded.");
+      await loadLineage();
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not add dependency."); }
+    finally { setBusy(false); }
+  }
+  return <div className="governance-page">
+    <div className="governance-heading"><div><div className="eyebrow">TRACE & ASSESS IMPACT</div><h2>Data lineage</h2><p>Track dataset dependencies and discover downstream impact before changes.</p></div><span className="governance-pill">Tenant-scoped graph</span></div>
+    {error && <div className="inline-error">{error}<button onClick={() => setError("")}>Dismiss</button></div>}
+    {notice && <div className="inline-notice"><CheckCircle2 size={15}/>{notice}</div>}
+    <section className="panel governance-panel"><div className="panel-heading"><div><h3>Dependency explorer</h3><p>Select a dataset to inspect its immediate parents and downstream impact.</p></div></div>
+      <select className="governance-select" value={assetId} onChange={(e) => setAssetId(e.target.value)}><option value="">Select dataset</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select>
+      {lineage && <div className="lineage-grid"><div><span>UPSTREAM</span>{lineage.upstream.map((edge: any) => <div className="lineage-node" key={edge.id}><GitBranch size={15}/>{edge.upstreamAsset.name}</div>)}{!lineage.upstream.length && <small>No upstream datasets</small>}</div><div className="lineage-current"><Database size={22}/><b>{lineage.asset.name}</b><small>Selected dataset</small></div><div><span>DOWNSTREAM</span>{lineage.downstream.map((edge: any) => <div className="lineage-node" key={edge.id}><GitBranch size={15}/>{edge.downstreamAsset.name}</div>)}{!lineage.downstream.length && <small>No direct downstream datasets</small>}</div></div>}
+    </section>
+    {lineage && <section className="panel governance-panel"><div className="panel-heading"><div><h3>Impact analysis</h3><p>All reachable downstream datasets, capped at 500 nodes.</p></div><strong className="impact-count">{lineage.impactCount}</strong></div>{lineage.impactedAssets.map((asset: any) => <div className="rule-row" key={asset.id}><div><b>{asset.name}</b><small>{asset.fullyQualifiedName}</small></div><span className="rule-active">IMPACTED</span></div>)}{!lineage.impactCount && <p className="governance-empty">No downstream impact found.</p>}</section>}
+    <section className="panel governance-panel"><div className="panel-heading"><div><h3>Add dependency</h3><p>Define an upstream → downstream relationship. Cycles are rejected.</p></div></div>
+      <form className="lineage-form" onSubmit={(e) => void addDependency(e)}><select value={upstreamId} onChange={(e) => setUpstreamId(e.target.value)} required><option value="">Upstream dataset</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select><span>→</span><select value={downstreamId} onChange={(e) => setDownstreamId(e.target.value)} required><option value="">Downstream dataset</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select><button type="submit" disabled={busy || !assets.length}>{busy ? "Saving…" : "Add dependency"}</button></form>
+    </section>
+  </div>;
+}
 
 function DataCatalogPage({ organizationId }: { organizationId: string }) {
   const [assets, setAssets] = useState<any[]>([]);
