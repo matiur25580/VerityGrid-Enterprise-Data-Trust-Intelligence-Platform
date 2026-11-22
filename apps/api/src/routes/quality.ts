@@ -74,7 +74,7 @@ qualityRouter.post("/assets/:assetId/rules", writer, async (req, res, next) => {
         data: {
           organizationId, assetId: asset.id, name: body.data.name,
           description: body.data.description, ruleType: type as QualityRuleType,
-          params: params as Prisma.InputJsonValue, version: (latest?.version ?? 0) + 1,
+          params: params as unknown as Prisma.InputJsonValue, version: (latest?.version ?? 0) + 1,
         },
       });
     });
