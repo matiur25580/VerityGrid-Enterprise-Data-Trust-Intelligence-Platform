@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { app } from "../src/app";
 import { prisma } from "../src/lib/prisma";
-import { closeApiRateLimitStore } from "../src/middleware/api-rate-limit";
+import { closeRateLimitRedis } from "../src/lib/rate-limit-store";
 
 const email = `phase2-${randomUUID()}@veritygrid.test`;
 const password = "A-unique-test-password-2026";
@@ -23,7 +23,7 @@ describe("identity and tenant security", () => {
     if (reviewerUserId) await prisma.user.deleteMany({ where: { id: reviewerUserId } });
     await prisma.user.deleteMany({ where: { email } });
     await prisma.$disconnect();
-    await closeApiRateLimitStore();
+    await closeRateLimitRedis();
   });
 
   it("exposes liveness, database readiness and privacy-safe request correlation", async () => {
