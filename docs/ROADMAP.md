@@ -11,6 +11,7 @@
 - [ ] Add automated API and frontend test runners
 - [x] Add database migrations and GitHub Actions CI workflow (execution pending)
 - [ ] Add frontend automated test runner
+- [x] Add top-level React error boundary with a safe reload fallback (manual verification pending)
 
 ## Phase 2 — Identity and tenant security
 - [x] Organization registration and sign-in API
