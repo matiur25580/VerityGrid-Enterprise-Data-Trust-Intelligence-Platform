@@ -17,6 +17,8 @@
 - [x] Session expiry, logout revocation and atomic session rotation
 - [x] Membership and role authorization middleware
 - [x] Membership-verified tenant context
+- [x] React sign-in and organization registration screens
+- [x] Session restoration, workspace selection and sign-out UI
 - [ ] Tenant-scoped repositories for all future tenant-owned resources
 - [x] Add API integration coverage for registration, login, session rotation/revocation and tenant authorization (authored; execution pending)
 - [ ] Run security and integration tests against a migrated local database
