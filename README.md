@@ -114,7 +114,7 @@ veritygrid/
 - Sessions expire, can be revoked and support atomic rotation.
 - Membership-verified tenant context protects organization-scoped API routes.
 - OWNER and ADMIN roles are used for privileged governance operations; other workspace roles are defined in the domain model.
-- All API routes except health/readiness are rate-limited to 300 requests per 15 minutes per client IP; registration and login retain a stricter 10-attempt per 15-minute limit. The default limiter store is process-local, so multi-instance deployments require a shared store or gateway-level enforcement.
+- All API routes except health/readiness are rate-limited to 300 requests per 15 minutes per client IP; registration and login retain a stricter 10-attempt per 15-minute limit. API and authentication limits use atomic Redis counters shared across replicas; Redis is required for non-health API requests and requests fail closed if the store is unavailable.
 - Helmet, explicit CORS, request-size limits and origin checks provide API security baselines.
 - Request logs deliberately omit request bodies, query strings, cookies, authorization headers and IP addresses.
 - Security policy: [SECURITY.md](SECURITY.md) and [Security Baseline](docs/SECURITY.md).
