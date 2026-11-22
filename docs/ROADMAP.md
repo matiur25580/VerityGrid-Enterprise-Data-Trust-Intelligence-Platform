@@ -55,7 +55,7 @@
 - [x] Evidence-linked deterministic operational insights (explicitly not a generative AI integration)
 - [x] Human approval and audited execution for consequential classification changes
 - [x] Regression coverage authored for CSV formula-injection mitigation and cross-tenant policy rejection
-- [ ] Scheduled SLA evaluation, alert delivery and broader trend/time-series analytics
+- [x] Scheduled tenant-scoped SLA evaluation with idempotent incident creation, recovery transitions and audit history\n- [x] Notification-provider hook on freshness incident transitions (delivery remains disabled until configured)\n- [ ] Broader trend/time-series analytics and live notification-provider configuration
 
 ## Phase 7 — Production hardening
 - [ ] Threat model and security review
