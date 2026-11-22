@@ -47,4 +47,4 @@ Supported action: SET_CLASSIFICATION only. Stale, rejected, pending, malformed o
 
 ## Migration and verification
 
-Apply migration `20261122100000_reliability_intelligence` after the existing migrations. Run `npm run db:generate`, `npm run db:migrate`, `npm run typecheck`, `npm run build` and `npm test` locally. Runtime verification against PostgreSQL and Redis remains necessary.
+Apply migration `20261122100000_reliability_intelligence` and then `20261122130000_freshness_history` after the existing migrations. Run `npm run db:generate`, `npm run db:migrate`, `npm run typecheck`, `npm run build` and `npm test` locally. Runtime verification against PostgreSQL and Redis remains necessary.
