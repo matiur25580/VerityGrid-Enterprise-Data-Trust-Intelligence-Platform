@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
 import { enqueueQualityJob, qualityQueue, deadLetterQueue } from "../lib/quality-worker";
@@ -12,7 +13,7 @@ const writer=requireRoles("OWNER","ADMIN","DATA_STEWARD","DATA_ENGINEER");
 const admin=requireRoles("OWNER","ADMIN");
 const uuid=z.string().uuid();
 
-async function audit(organizationId:string,actorId:string,action:string,entityType:string,entityId:string,metadata:Record<string,unknown>={}) {
+async function audit(organizationId:string,actorId:string,action:string,entityType:string,entityId:string,metadata:Prisma.InputJsonObject={}) {
   await prisma.auditEvent.create({data:{organizationId,actorId,action,entityType,entityId,metadata}});
 }
 
@@ -54,6 +55,8 @@ operationsRouter.patch("/incidents/:incidentId",writer,async(req,res,next)=>{try
  if(!id.success||!body.success||(!body.data.status&&!body.data.severity&&body.data.assigneeId===undefined)){res.status(400).json({error:{code:"VALIDATION_ERROR",message:"Provide a valid incident update and an event detail."}});return;}
  const org=req.tenant!.organizationId;const existing=await prisma.incident.findFirst({where:{id:id.data,organizationId:org}});
  if(!existing){res.status(404).json({error:{code:"INCIDENT_NOT_FOUND",message:"Incident not found."}});return;}
+ const allowed:Record<string,string[]>={OPEN:["ACKNOWLEDGED","RESOLVED"],ACKNOWLEDGED:["RESOLVED"],RESOLVED:["CLOSED"],CLOSED:[]};
+ if(body.data.status&&body.data.status!==existing.status&&!allowed[existing.status]?.includes(body.data.status)){res.status(409).json({error:{code:"INVALID_INCIDENT_TRANSITION",message:"This incident lifecycle transition is not allowed."}});return;}
  if(body.data.assigneeId&&!await prisma.membership.findFirst({where:{organizationId:org,userId:body.data.assigneeId}})){res.status(400).json({error:{code:"INVALID_ASSIGNEE",message:"Assignee must be a workspace member."}});return;}
  const {detail,...changes}=body.data;const incident=await prisma.incident.update({where:{id:existing.id},data:changes});
  await prisma.incidentEvent.create({data:{organizationId:org,incidentId:incident.id,actorId:req.auth!.userId,eventType:"UPDATED",detail}});
