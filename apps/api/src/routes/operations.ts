@@ -83,6 +83,7 @@ operationsRouter.patch("/approvals/:approvalId",admin,async(req,res,next)=>{try{
  if(!id.success||!body.success){res.status(400).json({error:{code:"VALIDATION_ERROR",message:"A decision and reason are required."}});return;}
  const org=req.tenant!.organizationId;const current=await prisma.governanceApproval.findFirst({where:{id:id.data,organizationId:org}});
  if(!current){res.status(404).json({error:{code:"APPROVAL_NOT_FOUND",message:"Approval not found."}});return;}
+ if(current.requestedBy===req.auth!.userId){res.status(403).json({error:{code:"SELF_APPROVAL_DENIED",message:"A requester cannot decide their own approval."}});return;}
  if(current.decision!=="PENDING"){res.status(409).json({error:{code:"APPROVAL_FINALIZED",message:"This approval has already been decided."}});return;}
  const approval=await prisma.governanceApproval.update({where:{id:current.id},data:{decision:body.data.decision,comment:body.data.comment,decidedBy:req.auth!.userId,decidedAt:new Date()}});
  await audit(org,req.auth!.userId,"GOVERNANCE_APPROVAL_DECIDED","GovernanceApproval",approval.id,{decision:approval.decision});
