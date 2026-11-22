@@ -39,7 +39,7 @@ For CSV/JSON imports, the catalog stores schema plus aggregate per-column counts
 
 ## Lineage and impact
 
-An edge records an upstream dataset and a downstream dataset. Both must belong to the active organization. Self-links and cycles are rejected. Impact analysis traverses downstream edges and returns up to 500 impacted assets; the graph query reads at most 5,000 edges per request. This is a manually maintained metadata graph, not automatic SQL query lineage.
+An edge records an upstream dataset and a downstream dataset. Both must belong to the active organization. Self-links and cycles are rejected. Impact analysis traverses downstream edges and returns up to 500 impacted assets; the graph query reads at most 5,000 edges per request. The response sets `impactTruncated` when either bound is reached. This is a manually maintained metadata graph, not automatic SQL query lineage.
 
 ## Operational notes
 
