@@ -1,16 +1,17 @@
 import { rateLimit } from "express-rate-limit";
+import { RedisRateLimitStore } from "../lib/rate-limit-store";
 
 /**
- * Protects API routes from accidental or abusive request bursts.
- * The default memory store is process-local; multi-instance deployments must
- * configure a shared rate-limit store at the edge or in the application.
+ * Uses a shared Redis counter so limits are consistent across API replicas.
+ * Redis is a required runtime dependency for rate-limited API requests.
  */
-export function createApiRateLimiter(limit = 300) {
+export function createApiRateLimiter(limit = 300, namespace = "api") {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
     limit,
     standardHeaders: "draft-7",
     legacyHeaders: false,
+    store: new RedisRateLimitStore(namespace),
     message: {
       error: {
         code: "API_RATE_LIMITED",
