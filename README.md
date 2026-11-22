@@ -48,7 +48,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 ### Enterprise engineering foundations
 - Multi-tenant organization membership and role-based access control.
 - Opaque, database-backed sessions with secure cookie settings, rotation and revocation.
-- Password hashing, authentication rate limiting, request validation, Helmet, explicit CORS and origin checks.
+- Password hashing, global API rate limiting with stricter authentication limits, request validation, Helmet, explicit CORS and origin checks.
 - Server-generated request IDs and privacy-conscious structured HTTP logs.
 - Liveness and PostgreSQL readiness endpoints.
 - GitHub Actions CI, CodeQL security analysis, Dependabot update automation and pull-request review checklist.
@@ -112,7 +112,7 @@ veritygrid/
 - Sessions expire, can be revoked and support atomic rotation.
 - Membership-verified tenant context protects organization-scoped API routes.
 - OWNER and ADMIN roles are used for privileged governance operations; other workspace roles are defined in the domain model.
-- Authentication endpoints are rate-limited.
+- All API routes except health/readiness are rate-limited to 300 requests per 15 minutes per client IP; registration and login retain a stricter 10-attempt per 15-minute limit. The default limiter store is process-local, so multi-instance deployments require a shared store or gateway-level enforcement.
 - Helmet, explicit CORS, request-size limits and origin checks provide API security baselines.
 - Request logs deliberately omit request bodies, query strings, cookies, authorization headers and IP addresses.
 - Security policy: [SECURITY.md](SECURITY.md) and [Security Baseline](docs/SECURITY.md).
