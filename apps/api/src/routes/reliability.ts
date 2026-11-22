@@ -102,7 +102,8 @@ reliabilityRouter.get("/exports", async (req, res, next) => {
       const now = new Date();
       rows = assets.map(a => { const status = a.freshnessPolicy ? freshnessStatus(a.lastObservedAt,a.freshnessPolicy.targetMinutes,a.freshnessPolicy.warnAtPercent,now) : {status:"UNCONFIGURED",ageMinutes:null,targetMinutes:null}; return [a.id,a.name,a.lastObservedAt,status.status,status.ageMinutes,status.targetMinutes]; });
     }
-    const csv = [headers, ...rows as unknown[][]].map(row => row.map(csvCell).join(",")).join("\r\n");
+    const csv = [headers, ...rows as unknown[][]].map(row => row.map(csvCell).join(",")).join("\r
+");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="veritygrid-${type.data}-${new Date().toISOString().slice(0,10)}.csv"`);
     res.send(csv);
@@ -153,12 +154,17 @@ reliabilityRouter.post("/actions/classification", writer, async (req, res, next)
     ]);
     if (!asset || !policy) { res.status(404).json({ error: { code: "ACTION_TARGET_NOT_FOUND", message: "A matching asset and approval policy are required in this workspace." } }); return; }
     if (asset.classification === body.data.classification) { res.status(409).json({ error: { code: "NO_CLASSIFICATION_CHANGE", message: "The asset already has this classification." } }); return; }
-    const approval = await prisma.$transaction(async tx => {\n      const created = await tx.governanceApproval.create({ data: {
+    const approval = await prisma.$transaction(async tx => {
+      const created = await tx.governanceApproval.create({ data: {
       organizationId, policyId: policy.id, requestedBy: req.auth!.userId,
       requestDescription: body.data.reason, decision: "PENDING",
       actionType: "SET_CLASSIFICATION",
       actionPayload: { assetId: asset.id, targetClassification: body.data.classification, previousClassification: asset.classification } as Prisma.InputJsonValue,
-    } });\n      await tx.auditEvent.create({ data: { organizationId, actorId: req.auth!.userId, action: "CLASSIFICATION_CHANGE_REQUESTED", entityType: "GovernanceApproval", entityId: created.id, metadata: { assetId: asset.id, targetClassification: body.data.classification } } });\n      return created;\n    });\n    res.status(202).json({ data: { approvalId: approval.id, state: approval.decision, assetName: asset.name } });
+    } });
+      await tx.auditEvent.create({ data: { organizationId, actorId: req.auth!.userId, action: "CLASSIFICATION_CHANGE_REQUESTED", entityType: "GovernanceApproval", entityId: created.id, metadata: { assetId: asset.id, targetClassification: body.data.classification } } });
+      return created;
+    });
+    res.status(202).json({ data: { approvalId: approval.id, state: approval.decision, assetName: asset.name } });
   } catch (error) { next(error); }
 });
 
