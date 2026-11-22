@@ -97,7 +97,7 @@ qualityRouter.post("/assets/:assetId/runs", writer, async (req, res, next) => {
       where: { organizationId, assetId: asset.id, isActive: true },
       orderBy: { name: "asc" },
     });
-    const schema = Array.isArray(asset.schema) ? asset.schema as Array<Record<string, unknown>> : [];
+    const schema = Array.isArray(asset.schema) ? asset.schema as unknown as Array<Record<string, unknown>> : [];
     const metadata = jsonObject(asset.metadata);
     const stats = Array.isArray(metadata.columnStats) ? metadata.columnStats as Array<Record<string, unknown>> : [];
     const results = rules.map((rule) => {
