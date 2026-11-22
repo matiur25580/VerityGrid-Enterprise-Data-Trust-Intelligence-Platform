@@ -18,8 +18,8 @@
     "worker:dev": "npm run worker:dev -w @veritygrid/api"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "typescript": "^5.7.3"
+    "concurrently": "^10.0.7",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=22.11.0"
