@@ -53,7 +53,7 @@
 - [x] Live freshness evaluation with healthy, at-risk, breached, unknown and unconfigured states
 - [x] Persisted-record operational analytics and bounded CSV exports
 - [x] Evidence-linked deterministic operational insights (explicitly not a generative AI integration)
-- [x] Human approval and audited execution for consequential classification changes
+- [x] Human approval and audited execution for consequential classification changes\n- [x] Regression coverage authored for CSV formula-injection mitigation and cross-tenant policy rejection
 - [ ] Scheduled SLA evaluation, alert delivery and broader trend/time-series analytics
 
 ## Phase 7 — Production hardening
