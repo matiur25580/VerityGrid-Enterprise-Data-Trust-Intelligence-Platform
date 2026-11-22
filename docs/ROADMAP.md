@@ -46,7 +46,9 @@
 - [x] Governance policies and approval request/decision workflow
 - [x] Append-only audit event API and notification provider abstraction (delivery disabled until configured)
 - [x] Operations Center UI for incidents, approvals, queue activity and dead letters
-- [x] Freshness, analytics, export, evidence-insight and approval-gated action integration scenarios authored\n- [x] CSV spreadsheet-formula injection mitigation and regression coverage\n- [ ] Execute full API integration suite, generate Prisma client, apply migrations and verify builds
+- [x] Freshness, analytics, export, evidence-insight and approval-gated action integration scenarios authored
+- [x] CSV spreadsheet-formula injection mitigation and regression coverage
+- [ ] Execute full API integration suite, generate Prisma client, apply migrations and verify builds
 
 ## Phase 6 — Reliability and intelligence
 - [x] Dataset observation timestamps and tenant-scoped freshness SLA policies
@@ -55,7 +57,11 @@
 - [x] Evidence-linked deterministic operational insights (explicitly not a generative AI integration)
 - [x] Human approval and audited execution for consequential classification changes
 - [x] Regression coverage authored for CSV formula-injection mitigation and cross-tenant policy rejection
-- [x] Scheduled tenant-scoped SLA evaluation with idempotent incident creation, recovery transitions and audit history\n- [x] Notification-provider hook on freshness incident transitions (delivery remains disabled until configured)\n- [x] Tenant-scoped daily quality, incident and freshness trend series (7–90 day window)\n- [x] Daily freshness snapshots with bounded one-row-per-asset-per-day retention\n- [ ] Live notification-provider configuration and delivery verification
+- [x] Scheduled tenant-scoped SLA evaluation with idempotent incident creation, recovery transitions and audit history
+- [x] Notification-provider hook on freshness incident transitions (delivery remains disabled until configured)
+- [x] Tenant-scoped daily quality, incident and freshness trend series (7–90 day window)
+- [x] Daily freshness snapshots with bounded one-row-per-asset-per-day retention
+- [ ] Live notification-provider configuration and delivery verification
 
 ## Phase 7 — Production hardening
 - [ ] Threat model and security review
