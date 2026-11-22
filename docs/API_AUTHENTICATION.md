@@ -68,7 +68,7 @@ const response = await fetch("http://localhost:4000/api/auth/me", {
 });
 ```
 
-For local development, configure the web app's API proxy or call the API origin directly with `credentials: "include"`. In production, use HTTPS and configure the web/API origins and cookie policy for the actual hosting topology.
+The web app uses relative `/api/...` requests and the Vite development proxy, so the browser communicates with one origin locally. For production, prefer a same-site reverse proxy that exposes the API under the web origin. The session cookie is `SameSite=Strict`; a cross-site frontend/API deployment will not work with that cookie policy by merely enabling CORS. If separate sites are required, design and review a `SameSite=None; Secure` cookie plus explicit CSRF protections before changing the cookie policy. Always use HTTPS in production.
 
 ## Session model
 
@@ -96,3 +96,7 @@ Run dependency installation, Prisma client generation, database migration, API/w
 ## Integration tests
 
 Run `npm test` from the repository root after installing dependencies, starting PostgreSQL and applying the Prisma schema. The API integration suite exercises registration, authenticated membership lookup, tenant access denial, role checks, session rotation, logout and login. The suite has been added but has not yet been executed in this environment.
+
+## Web authentication experience
+
+The React client now provides sign-in and workspace-registration screens, checks the existing session on page load, loads the authenticated user and memberships, supports switching between verified organizations, and revokes the session on sign-out. It does not store session tokens in localStorage. The dashboard remains a data-empty shell until catalog and quality APIs are implemented.
