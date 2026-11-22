@@ -153,6 +153,7 @@ model QualityRule {
 
 model QualityRun {
   id String @id @default(uuid()) @db.Uuid
+  jobKey String? @unique @db.VarChar(180)
   organizationId String @db.Uuid
   assetId String @db.Uuid
   score Float?
@@ -205,6 +206,7 @@ model Incident {
 }
 model IncidentEvent {
   id String @id @default(uuid()) @db.Uuid
+  sourceKey String? @unique @db.VarChar(180)
   organizationId String @db.Uuid
   incidentId String @db.Uuid
   actorId String @db.Uuid
