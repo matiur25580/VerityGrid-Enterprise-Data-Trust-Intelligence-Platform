@@ -251,6 +251,7 @@ model GovernanceApproval {
   organizationId String @db.Uuid
   policyId String @db.Uuid
   requestedBy String @db.Uuid
+  requestDescription String @db.VarChar(4000)
   decision ApprovalDecision @default(PENDING)
   comment String? @db.VarChar(1000)
   decidedBy String? @db.Uuid
