@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateSchemaCompatibility } from "../src/lib/data-contract";
+import { contractFieldsSchema, evaluateSchemaCompatibility } from "../src/lib/data-contract";
 
 const baseline = [
   { name: "customer_id", type: "NUMBER", nullable: false },
@@ -50,5 +50,28 @@ describe("data contract lifecycle", () => {
     expect(canTransitionContractStatus("RETIRED", "ACTIVE")).toBe(false);
     expect(canTransitionContractStatus("RETIRED", "DRAFT")).toBe(false);
     expect(canTransitionContractStatus("ACTIVE", "DRAFT")).toBe(false);
+  });
+});
+
+
+describe("data contract field schema validation", () => {
+  it("rejects malformed snapshots instead of silently treating them as empty schemas", () => {
+    expect(contractFieldsSchema.safeParse([{ name: "customer_id" }]).success).toBe(false);
+    expect(contractFieldsSchema.safeParse([{ name: "customer_id", type: "NUMBER" }, null]).success).toBe(false);
+  });
+
+  it("rejects duplicate field names so compatibility checks remain unambiguous", () => {
+    const parsed = contractFieldsSchema.safeParse([
+      { name: "customer_id", type: "NUMBER" },
+      { name: "customer_id", type: "STRING" },
+    ]);
+    expect(parsed.success).toBe(false);
+  });
+
+  it("accepts valid unique field definitions", () => {
+    expect(contractFieldsSchema.safeParse([
+      { name: "customer_id", type: "NUMBER", nullable: false },
+      { name: "email", type: "STRING", nullable: true },
+    ]).success).toBe(true);
   });
 });
