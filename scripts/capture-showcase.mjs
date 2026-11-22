@@ -42,22 +42,24 @@ try {
   await open("Data Catalog");
   await capture("02-data-catalog.png", "Searchable data inventory, ownership and classification");
 
+  await open("Data Contracts");
+  await capture("03-data-contracts.png", "Versioned schema expectations and compatibility evidence");
+
   await open("Data Lineage");
-  await capture("03-data-lineage.png", "Upstream and downstream lineage with impact context");
+  await capture("04-data-lineage.png", "Upstream and downstream lineage with impact context");
 
   await open("Quality Center");
-  await capture("04-quality-center.png", "Versioned validation rules and persisted quality evidence");
+  await capture("05-quality-center.png", "Versioned validation rules and persisted quality evidence");
 
   await open("Incidents");
-  await capture("05-incident-response.png", "Tenant-scoped incident lifecycle and response operations");
-  await capturePanel("06-governance-approvals.png", "Governance policies", "Policy approvals and accountable decision history");
-  await capturePanel("07-notification-deliveries.png", "Incident notifications", "Webhook delivery state, retries and delivery evidence");
+  await capture("06-incident-response.png", "Tenant-scoped incident lifecycle and response operations");
+  await capturePanel("07-governance-approvals.png", "Governance policies", "Policy approvals and accountable decision history");
+  await capturePanel("08-notification-deliveries.png", "Incident notifications", "Webhook delivery state, retries and delivery evidence");
 
   await open("Reliability");
-  await capture("08-reliability-overview.png", "Reliability posture across freshness and quality");
-  await capturePanel("09-reliability-trends.png", "Reliability trends", "Historical quality, incident and freshness trends");
-  await capturePanel("10-freshness-sla.png", "Freshness & SLA monitor", "Freshness objectives and healthy, at-risk and breached states");
-  await capturePanel("11-operational-analytics.png", "Operational analytics", "Persisted operational measures and bounded exports");
+  await capture("09-reliability-overview.png", "Reliability posture across freshness and quality");
+  await capturePanel("10-reliability-trends.png", "Reliability trends", "Historical quality, incident and freshness trends");
+  await capturePanel("11-freshness-sla.png", "Freshness & SLA monitor", "Freshness objectives and healthy, at-risk and breached states");
   await capturePanel("12-evidence-insights.png", "Evidence-grounded assistant", "Evidence-linked operational recommendations with traceable facts");
 } finally {
   await browser.close();

@@ -19,6 +19,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 - Tenant-scoped catalog search and access controls.
 - Stable cursor-based asset pagination (1–100 records per page) with workspace/filter-bound cursor validation.
 - Filterable, cursor-paginated source discovery with workspace-bound cursors and bounded source detail previews.
+- Keyboard-first command palette (`Ctrl/Cmd + K`) for fast navigation across workspace modules.
 - PostgreSQL source registration is currently metadata-only; live external database introspection is a planned connector capability.
 
 ### Data quality and lineage
@@ -276,24 +277,24 @@ Full runbook: [Production Readiness and Operations](docs/PRODUCTION_READINESS.md
 
 ## 9. Dashboard screenshot gallery
 
-The requested gallery is designed as a **single vertical column of 12 full-width dashboard captures**, each followed by a descriptive caption. Captures must come from a running, authenticated VerityGrid instance with synthetic demonstration data—not fabricated UI art.
+The gallery is intentionally presented in a **single-column layout**: one full-width, real dashboard capture per row, followed immediately by an editorial caption. The capture workflow targets a consistent 1440 × 1000 viewport and an authenticated synthetic demonstration workspace.
 
-**Capture assets are not yet committed.** A verified running preview URL or the original 12 dashboard image files is needed to produce genuine screenshots. Until then, the 12 gallery slots and editorial captions are listed below as a capture plan, not as completed screenshots.
+**Screenshot status: pending capture.** The repository contains a Playwright capture script and the twelve planned captions, but the PNG assets are not committed yet. Run the [capture checklist](docs/screenshots/README.md) against a live demo instance before publishing the gallery. Do not substitute generated mockups or fabricated metrics.
 
-1. **Executive workspace overview** — Bring the data estate, quality posture and operational priorities into one leadership-ready view. *Capture pending — `01-executive-overview.png`.*
-2. **Data catalog and discovery** — Show the searchable inventory, ownership and classification model that gives teams a shared source of truth. *Capture pending — `02-data-catalog.png`.*
-3. **Dataset profile and schema** — Reveal field-level structure and profiling evidence so engineers can assess completeness and shape. *Capture pending — `03-dataset-profile.png`.*
-4. **Data contract registry** — Demonstrate versioned schema baselines, explicit compatibility policy and accountable ownership for producer/consumer expectations. *Capture pending — `04-data-contracts.png`.*
-5. **Quality execution results** — Present a persisted validation run with clear pass, fail and skipped evidence. *Capture pending — `05-quality-results.png`.*
-6. **Lineage and impact analysis** — Visualize upstream/downstream relationships and the blast radius of a data change. *Capture pending — `06-lineage-impact.png`.*
-7. **Background processing operations** — Highlight queue activity, retry behavior and dead-letter visibility for resilient workloads. *Capture pending — `07-processing-operations.png`.*
-8. **Incident response workspace** — Show severity, lifecycle and event history from detection through recovery. *Capture pending — `08-incident-response.png`.*
-9. **Governance and approvals** — Demonstrate independent approval decisions and traceable controls over consequential changes. *Capture pending — `09-governance-approvals.png`.*
-10. **Freshness and SLA monitoring** — Connect freshness objectives to healthy, at-risk and breached operational states. *Capture pending — `10-freshness-sla.png`.*
-11. **Reliability trends and insights** — Tell the story of historical quality, incidents and evidence-linked recommendations. *Capture pending — `11-reliability-trends.png`.*
-12. **Notification delivery and auditability** — Close the operational loop with webhook delivery status, retries and audit evidence. *Capture pending — `12-notifications-audit.png`.*
+1. **Executive command center** — A leadership-ready snapshot of the data estate, current trust posture and operational priorities. *Pending: `01-executive-overview.png`.*
+2. **Data catalog and discovery** — A shared inventory of datasets, ownership, source metadata and classification. *Pending: `02-data-catalog.png`.*
+3. **Data contract registry** — Versioned schema expectations, ownership and explicit compatibility decisions for producer/consumer trust. *Pending: `03-data-contracts.png`.*
+4. **Lineage and impact analysis** — Upstream/downstream dependencies that help teams understand the blast radius of change. *Pending: `04-data-lineage.png`.*
+5. **Quality center** — Versioned validation rules and persisted pass/fail evidence for explainable data quality. *Pending: `05-quality-center.png`.*
+6. **Incident response** — Severity, ownership, lifecycle and event history for coordinated operational recovery. *Pending: `06-incident-response.png`.*
+7. **Governance approvals** — Policy controls and independent decisions that make consequential changes accountable. *Pending: `07-governance-approvals.png`.*
+8. **Notification delivery** — Webhook delivery state, retry controls and operational evidence for alert workflows. *Pending: `08-notification-deliveries.png`.*
+9. **Reliability overview** — A consolidated view of freshness, quality and service reliability signals. *Pending: `09-reliability-overview.png`.*
+10. **Reliability trends** — Historical quality, incident and freshness trends that reveal patterns over time. *Pending: `10-reliability-trends.png`.*
+11. **Freshness and SLA monitor** — Objective configuration and healthy, at-risk and breached freshness states. *Pending: `11-freshness-sla.png`.*
+12. **Evidence-grounded insights** — Traceable operational recommendations grounded in persisted platform evidence, not invented AI output. *Pending: `12-evidence-insights.png`.*
 
-For the final gallery, place one image per row in numeric order, use descriptive alt text, and keep each caption directly below its image. See the [full screenshot capture checklist](docs/screenshots/README.md).
+When captured, embed each PNG in numeric order with descriptive alt text, keep the image on its own line, and place its caption directly beneath it. The script and this gallery use the same filenames so the assets can be added without manual renaming.
 
 ---
 
@@ -336,6 +337,7 @@ The following are intentionally explicit so that product claims remain evidence-
 - [x] Retryable webhook notification foundation and Operations Center visibility
 - [x] CI, CodeQL, Dependabot, request correlation and readiness probe foundations
 - [x] PostgreSQL backup/restore scripts and operational runbook
+- [x] Keyboard-first command palette for workspace navigation
 - [x] Commit a reproducible workspace dependency lockfile and use `npm ci` in CI
 - [x] Pass main-branch CI on Node.js 22, 24 and 26; pass CodeQL security analysis
 - [ ] Complete threat model, penetration testing and load/failure testing

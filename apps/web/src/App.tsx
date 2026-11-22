@@ -56,6 +56,8 @@ function App() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
   const [activePage, setActivePage] = useState("Overview");
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
 
   const selectedMembership = useMemo(
     () => user?.memberships.find((item) => item.organization.id === selectedOrganizationId) ?? user?.memberships[0],
@@ -91,6 +93,22 @@ function App() {
   }, []);
 
   useEffect(() => { void loadSession(); }, [loadSession]);
+
+  useEffect(() => {
+    function handleCommandShortcut(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandQuery("");
+        setCommandOpen(true);
+      }
+      if (event.key === "Escape") {
+        setCommandOpen(false);
+        setCommandQuery("");
+      }
+    }
+    window.addEventListener("keydown", handleCommandShortcut);
+    return () => window.removeEventListener("keydown", handleCommandShortcut);
+  }, []);
 
   async function handleAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -167,6 +185,9 @@ function App() {
   }
 
   const activeWorkspace = selectedMembership?.organization;
+  const matchingPages = navigation.filter(({ label }) =>
+    label.toLowerCase().includes(commandQuery.trim().toLowerCase()),
+  );
 
   return (
     <div className="app-shell">
@@ -213,8 +234,44 @@ function App() {
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumbs">{activeWorkspace?.name ?? "Workspace"} <span>/</span> <b>{activePage}</b></div>
-          <div className="top-actions"><div className="search-box"><Search size={15}/><span>Search anything...</span><kbd>⌘ K</kbd></div><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><div className="top-avatar">{user.displayName.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</div></div>
+          <div className="top-actions"><div className="search-box" role="button" tabIndex={0} aria-haspopup="dialog" aria-label="Open page switcher" onClick={() => { setCommandQuery(""); setCommandOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setCommandQuery(""); setCommandOpen(true); } }}><Search size={15}/><span>Jump to a page...</span><kbd>⌘ K</kbd></div><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><div className="top-avatar">{user.displayName.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</div></div>
         </header>
+
+        {commandOpen && (
+          <div className="command-overlay" onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setCommandOpen(false);
+              setCommandQuery("");
+            }
+          }}>
+            <section className="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-title">
+              <h2 id="command-title" className="command-sr-only">Navigate workspace</h2>
+              <div className="command-input-row">
+                <Search size={18} aria-hidden="true" />
+                <input autoFocus aria-label="Find a workspace page" placeholder="Search pages and modules..."
+                  value={commandQuery} onChange={(event) => setCommandQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && matchingPages[0]) {
+                      setActivePage(matchingPages[0].label);
+                      setCommandOpen(false);
+                      setCommandQuery("");
+                    }
+                  }} />
+                <kbd>ESC</kbd>
+              </div>
+              <div className="command-results" role="listbox" aria-label="Workspace pages">
+                {matchingPages.length ? matchingPages.map(({ label, icon: Icon }) => (
+                  <button type="button" role="option" aria-selected={activePage === label} key={label}
+                    onClick={() => { setActivePage(label); setCommandOpen(false); setCommandQuery(""); }}>
+                    <Icon size={17} /><span>{label}</span>
+                    <small>{activePage === label ? "Current page" : "Open page"}</small>
+                  </button>
+                )) : <p className="command-empty">No matching workspace pages.</p>}
+              </div>
+              <div className="command-footer"><span>Navigate across your workspace</span><span><kbd>↵</kbd> to open <kbd>ESC</kbd> to close</span></div>
+            </section>
+          </div>
+        )}
 
         <section className="content">
           {notice && <div className="inline-notice"><CheckCircle2 size={16}/>{notice}<button onClick={() => setNotice("")}>Dismiss</button></div>}
