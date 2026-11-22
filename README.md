@@ -330,7 +330,7 @@ The following are intentionally explicit so that product claims remain evidence-
 
 - [x] Multi-tenant identity and workspace access
 - [x] Catalog, profiling, quality validation and lineage
-- [ ] Versioned data contract registry and schema compatibility evaluation (implementation on feature PR; CI/review pending)
+- [ ] Versioned data contract registry and schema compatibility evaluation (merged in PR #16; PR CI and CodeQL passed)
 - [x] Incident lifecycle, governance approvals and audit records
 - [x] Freshness SLAs, historical trends and evidence-linked insights
 - [x] Retryable webhook notification foundation and Operations Center visibility
