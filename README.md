@@ -281,73 +281,73 @@ The gallery is a single-column sequence of genuine application captures at a con
 
 ### 1. Executive command center
 
-![Executive command center — data estate, trust posture and operational priorities.](docs/screenshots/01-executive-overview.png)
+![Executive command center — data estate, trust posture and operational priorities.](docs/screenshots/01-executive-overview.svg)
 
 Executive command center — data estate, trust posture and operational priorities.
 
 ### 2. Data catalog and discovery
 
-![Data catalog and discovery — inventory, ownership and classification.](docs/screenshots/02-data-catalog.png)
+![Data catalog and discovery — inventory, ownership and classification.](docs/screenshots/02-data-catalog.svg)
 
 Data catalog and discovery — inventory, ownership and classification.
 
 ### 3. Data contract registry
 
-![Data contract registry — versioned schema expectations and compatibility evidence.](docs/screenshots/03-data-contracts.png)
+![Data contract registry — versioned schema expectations and compatibility evidence.](docs/screenshots/03-data-contracts.svg)
 
 Data contract registry — versioned schema expectations and compatibility evidence.
 
 ### 4. Lineage and impact analysis
 
-![Lineage and impact analysis — upstream/downstream dependencies and blast radius.](docs/screenshots/04-data-lineage.png)
+![Lineage and impact analysis — upstream/downstream dependencies and blast radius.](docs/screenshots/04-data-lineage.svg)
 
 Lineage and impact analysis — upstream/downstream dependencies and blast radius.
 
 ### 5. Quality center
 
-![Quality center — validation rules and persisted quality evidence.](docs/screenshots/05-quality-center.png)
+![Quality center — validation rules and persisted quality evidence.](docs/screenshots/05-quality-center.svg)
 
 Quality center — validation rules and persisted quality evidence.
 
 ### 6. Incident response
 
-![Incident response — severity, ownership, lifecycle and event history.](docs/screenshots/06-incident-response.png)
+![Incident response — severity, ownership, lifecycle and event history.](docs/screenshots/06-incident-response.svg)
 
 Incident response — severity, ownership, lifecycle and event history.
 
 ### 7. Governance approvals
 
-![Governance approvals — policy controls and independent decisions.](docs/screenshots/07-governance-approvals.png)
+![Governance approvals — policy controls and independent decisions.](docs/screenshots/07-governance-approvals.svg)
 
 Governance approvals — policy controls and independent decisions.
 
 ### 8. Notification delivery
 
-![Notification delivery — webhook state, retry controls and delivery evidence.](docs/screenshots/08-notification-deliveries.png)
+![Notification delivery — webhook state, retry controls and delivery evidence.](docs/screenshots/08-notification-deliveries.svg)
 
 Notification delivery — webhook state, retry controls and delivery evidence.
 
 ### 9. Reliability overview
 
-![Reliability overview — freshness, quality and service reliability signals.](docs/screenshots/09-reliability-overview.png)
+![Reliability overview — freshness, quality and service reliability signals.](docs/screenshots/09-reliability-overview.svg)
 
 Reliability overview — freshness, quality and service reliability signals.
 
 ### 10. Reliability trends
 
-![Reliability trends — historical quality, incident and freshness patterns.](docs/screenshots/10-reliability-trends.png)
+![Reliability trends — historical quality, incident and freshness patterns.](docs/screenshots/10-reliability-trends.svg)
 
 Reliability trends — historical quality, incident and freshness patterns.
 
 ### 11. Freshness and SLA monitor
 
-![Freshness and SLA monitor — objectives and healthy, at-risk and breached states.](docs/screenshots/11-freshness-sla.png)
+![Freshness and SLA monitor — objectives and healthy, at-risk and breached states.](docs/screenshots/11-freshness-sla.svg)
 
 Freshness and SLA monitor — objectives and healthy, at-risk and breached states.
 
 ### 12. Evidence-grounded insights
 
-![Evidence-grounded insights — traceable recommendations grounded in persisted evidence.](docs/screenshots/12-evidence-insights.png)
+![Evidence-grounded insights — traceable recommendations grounded in persisted evidence.](docs/screenshots/12-evidence-insights.svg)
 
 Evidence-grounded insights — traceable recommendations grounded in persisted evidence.
 
