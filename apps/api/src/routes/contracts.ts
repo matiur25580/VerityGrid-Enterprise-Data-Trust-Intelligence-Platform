@@ -3,24 +3,12 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
-import { canTransitionContractStatus, evaluateSchemaCompatibility, type ContractField } from "../lib/data-contract";
+import { canTransitionContractStatus, contractFieldsSchema, evaluateSchemaCompatibility } from "../lib/data-contract";
 
 export const contractRouter = Router();
 contractRouter.use(authenticate, requireTenant);
 
 const writer = requireRoles("OWNER", "ADMIN", "DATA_STEWARD", "DATA_ENGINEER");
-const fieldSchema = z.array(z.object({
-  name: z.string().trim().min(1).max(128),
-  type: z.string().trim().min(1).max(80),
-  nullable: z.boolean().optional(),
-})).max(500);
-
-function readFields(value: Prisma.JsonValue): ContractField[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is Prisma.JsonObject => Boolean(item) && typeof item === "object" && !Array.isArray(item))
-    .filter(item => typeof item.name === "string" && typeof item.type === "string")
-    .map(item => ({ name: String(item.name), type: String(item.type), nullable: item.nullable === true }));
-}
 
 contractRouter.get("/assets/:assetId", async (req, res, next) => {
   try {
@@ -110,8 +98,8 @@ contractRouter.post("/:contractId/evaluate", writer, async (req, res, next) => {
       include: { asset: { select: { id: true, schema: true, fullyQualifiedName: true } } },
     });
     if (!contract) { res.status(404).json({ error: { code: "ACTIVE_CONTRACT_NOT_FOUND", message: "An active contract was not found in this workspace." } }); return; }
-    const expected = fieldSchema.safeParse(readFields(contract.schemaSnapshot));
-    const actual = fieldSchema.safeParse(readFields(contract.asset.schema));
+    const expected = contractFieldsSchema.safeParse(contract.schemaSnapshot);
+    const actual = contractFieldsSchema.safeParse(contract.asset.schema);
     if (!expected.success || !actual.success) { res.status(409).json({ error: { code: "INVALID_SCHEMA_SNAPSHOT", message: "The stored contract or asset schema is not a supported field list." } }); return; }
     const evaluation = evaluateSchemaCompatibility(expected.data, actual.data, contract.compatibilityMode);
     const saved = await prisma.$transaction(async tx => {
