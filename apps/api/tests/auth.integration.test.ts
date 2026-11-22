@@ -248,7 +248,7 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId)
       .expect(200);
     expect(catalog.body.data.assets).toHaveLength(1);
-    expect(catalog.body.data.assets[0].classification).toBe("CONFIDENTIAL");
+    expect(catalog.body.data.assets[0].classification).toBe("RESTRICTED");
 
     await client
       .get("/api/catalog/assets")
