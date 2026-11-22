@@ -5,7 +5,7 @@
 
 The product is designed around a practical enterprise question: *Can teams trust this data, understand its dependencies, detect when it becomes unreliable, and prove how they responded?*
 
-> **Project status — active engineering build:** Core catalog, quality, lineage, governance and reliability capabilities are implemented, including tenant-safe asset/source pagination. Main-branch CI passed on Node.js 22, 24 and 26 after the Prisma baseline and integration-test fixes; CodeQL also passed. Production deployment, a committed dependency lockfile, verified dashboard screenshots and deployment-specific operational controls remain outstanding. This repository must not be represented as independently audited or production-certified.
+> **Project status — active engineering build:** Core catalog, quality, lineage, governance and reliability capabilities are implemented, including tenant-safe asset/source pagination. Main-branch CI passed on Node.js 22, 24 and 26 after the Prisma baseline and integration-test fixes; CodeQL also passed. Production deployment, merge of the reproducible dependency lockfile PR, verified dashboard screenshots and deployment-specific operational controls remain outstanding. This repository must not be represented as independently audited or production-certified.
 
 ---
 
@@ -229,7 +229,7 @@ Never commit real environment files or credentials. Replace local-only Compose c
 ## 7. Engineering quality and CI
 
 The repository includes:
-- **CI workflow:** tests Node.js 22, 24 and 26, currently installs workspaces with `npm install` because the root `package-lock.json` has not yet been committed, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration and frontend regression tests with PostgreSQL and Redis services. The lockfile-refresh workflow can generate and verify a lockfile PR.
+- **CI workflow:** tests Node.js 22, 24 and 26, uses `npm ci` with the workspace lockfile proposed in PR #14, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration and frontend regression tests with PostgreSQL and Redis services. The lockfile-refresh workflow can generate and verify a lockfile PR.
 - **CodeQL:** scheduled and change-triggered JavaScript/TypeScript security analysis using extended queries.
 - **Dependabot:** weekly npm and GitHub Actions dependency update pull requests.
 - **Pull-request template:** prompts reviewers to consider tenant isolation, data handling, migrations, job idempotency, observability and rollback.
