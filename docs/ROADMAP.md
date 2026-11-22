@@ -49,10 +49,12 @@
 - [ ] Full API integration suite, generated Prisma client, migration and build verification
 
 ## Phase 6 — Reliability and intelligence
-- [ ] Freshness and SLA monitoring
-- [ ] Operational analytics and exports
-- [ ] Evidence-grounded AI assistance
-- [ ] Human approval for consequential actions
+- [x] Dataset observation timestamps and tenant-scoped freshness SLA policies
+- [x] Live freshness evaluation with healthy, at-risk, breached, unknown and unconfigured states
+- [x] Persisted-record operational analytics and bounded CSV exports
+- [x] Evidence-linked deterministic operational insights (explicitly not a generative AI integration)
+- [x] Human approval and audited execution for consequential classification changes
+- [ ] Scheduled SLA evaluation, alert delivery and broader trend/time-series analytics
 
 ## Phase 7 — Production hardening
 - [ ] Threat model and security review
