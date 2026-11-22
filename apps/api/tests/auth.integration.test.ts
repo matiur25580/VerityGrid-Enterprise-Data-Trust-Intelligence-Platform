@@ -24,6 +24,15 @@ describe("identity and tenant security", () => {
     await prisma.$disconnect();
   });
 
+  it("exposes liveness, database readiness and request correlation", async () => {
+    const live = await request(app).get("/api/health").expect(200);
+    expect(live.body.status).toBe("ok");
+    expect(live.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/i);
+    const ready = await request(app).get("/api/health/ready").expect(200);
+    expect(ready.body.status).toBe("ready");
+    expect(ready.body.dependencies.postgres).toBe("ok");
+  });
+
   it("registers, authenticates, scopes tenants, rotates and revokes sessions", async () => {
     const client = request.agent(app);
 
