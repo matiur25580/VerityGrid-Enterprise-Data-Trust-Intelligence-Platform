@@ -212,6 +212,17 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
       select: { id: true },
     });
     const sourceId = input.sourceId ?? source!.id;
+    const columnStats = columns.map((column) => {
+      const values = records.map((record) => record[column.name]);
+      const present = values.filter((value) => value !== null && value !== undefined && value !== "");
+      const distinct = new Set(present.map((value) => typeof value === "object" ? JSON.stringify(value) : `${typeof value}:${String(value)}`));
+      return {
+        name: column.name,
+        nullCount: values.length - present.length,
+        nonNullCount: present.length,
+        distinctCount: distinct.size,
+      };
+    });
     const asset = await prisma.dataAsset.create({
       data: {
         organizationId: req.tenant!.organizationId,
@@ -224,7 +235,7 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         assetType: "DATASET",
         rowCount: records.length,
         schema: columns as Prisma.InputJsonValue,
-        metadata: { importFormat: input.format } as Prisma.InputJsonValue,
+        metadata: { importFormat: input.format, columnStats } as Prisma.InputJsonValue,
       },
     });
     res.status(201).json({ data: { asset, importedRows: records.length, discoveredColumns: columns.length } });
