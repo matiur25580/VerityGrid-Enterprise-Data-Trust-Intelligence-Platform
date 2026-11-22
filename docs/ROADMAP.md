@@ -12,11 +12,14 @@
 - [ ] Add database migration and CI workflow
 
 ## Phase 2 — Identity and tenant security
-- [ ] Organization registration and sign-in
-- [ ] Secure password hashing and session rotation
-- [ ] Membership and role authorization
-- [ ] Tenant-scoped service/repository patterns
+- [x] Organization registration and sign-in API
+- [x] bcrypt password hashing and database-backed opaque sessions
+- [x] Session expiry, logout revocation and atomic session rotation
+- [x] Membership and role authorization middleware
+- [x] Membership-verified tenant context
+- [ ] Tenant-scoped repositories for all future tenant-owned resources
 - [ ] Security and integration tests
+- [ ] Email verification and account recovery
 
 ## Phase 3 — Data catalog
 - [ ] Organization-scoped source registry
