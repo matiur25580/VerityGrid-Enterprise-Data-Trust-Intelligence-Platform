@@ -243,6 +243,7 @@ model GovernanceApproval {
 }
 model AuditEvent {
   id String @id @default(uuid()) @db.Uuid
+  sourceKey String? @unique @db.VarChar(180)
   organizationId String @db.Uuid
   actorId String @db.Uuid
   action String @db.VarChar(80)
