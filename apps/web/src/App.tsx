@@ -241,7 +241,7 @@ function App() {
 }
 
 function AuthScreen({
-  mode, setMode, onSubmit, error, notice, apiStatus,
+  mode, setMode, onSubmit, error, notice, apiStatus, busy,
 }: {
   mode: AuthMode;
   setMode: (mode: AuthMode) => void;
