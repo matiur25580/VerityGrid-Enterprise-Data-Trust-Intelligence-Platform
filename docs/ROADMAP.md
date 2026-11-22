@@ -83,6 +83,8 @@
 - [x] PostgreSQL custom-format backup and guarded restore utilities with SHA-256 verification
 - [x] Production readiness, release, backup and recovery runbook
 - [x] Commit reproducible workspace dependency lockfile and verify clean installs with `npm ci`
+- [x] Document a phased compatibility and validation plan for the grouped Prisma, Express, BullMQ/ioredis, React/Vite and TypeScript major upgrades (`docs/DEPENDENCY_UPGRADE_READINESS.md`)
+- [ ] Complete the grouped major dependency migration, regenerate the lockfile and pass the full Node.js 22/24/26 CI matrix
 - [x] Add manual GitHub Actions workflow to generate, clean-install verify and propose the lockfile via pull request
 - [x] Pass main-branch CI on Node.js 22, 24 and 26; CodeQL security analysis passed
 - [ ] Execute a PostgreSQL backup and restore rehearsal against an isolated database
