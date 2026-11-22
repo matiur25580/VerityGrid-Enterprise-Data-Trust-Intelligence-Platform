@@ -46,6 +46,8 @@ Prerequisites: Node.js 20+, npm 10+, Docker Engine/Desktop.
    `npm run db:migrate`
 6. Start both applications:
    `npm run dev`
+7. Run API integration tests (requires the migrated local database):
+   `npm test`
 
 The API defaults to `http://localhost:4000`; the web application defaults to `http://localhost:5173`.
 
