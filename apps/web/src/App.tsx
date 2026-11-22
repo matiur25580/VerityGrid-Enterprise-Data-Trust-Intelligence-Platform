@@ -3,7 +3,7 @@ import {
   Database, GitBranch, LayoutDashboard, LoaderCircle, LogOut, Search, ShieldCheck,
   Workflow, Eye, EyeOff, Building2, ChevronDown,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode, type ChangeEvent } from "react";
 
 type Membership = {
   role: string;
@@ -271,23 +271,25 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
 
   async function createSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setBusy(true); setError(""); setMessage("");
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     try {
       await api("/api/catalog/sources", {
         method: "POST",
         headers: { "x-organization-id": organizationId },
         body: JSON.stringify({ name: String(form.get("sourceName") ?? "").trim(), sourceType: String(form.get("sourceType") ?? "POSTGRESQL"), description: String(form.get("sourceDescription") ?? "").trim() }),
       });
-      event.currentTarget.reset();
+      formElement.reset();
       setMessage("Data source registered.");
       await loadCatalog();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not register source."); }
     finally { setBusy(false); }
   }
 
-  async function importFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.currentTarget.files?.[0];
+  async function importFile(event: ChangeEvent<HTMLInputElement>) {
+    const inputElement = event.currentTarget;
+    const file = inputElement.files?.[0];
     if (!file) return;
     setBusy(true); setError(""); setMessage("");
     try {
@@ -303,7 +305,7 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
       setMessage(`${file.name} imported successfully.`);
       await loadCatalog();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Import failed."); }
-    finally { setBusy(false); event.currentTarget.value = ""; }
+    finally { setBusy(false); inputElement.value = ""; }
   }
 
   return (
