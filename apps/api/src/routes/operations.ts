@@ -77,7 +77,7 @@ operationsRouter.post("/policies/:policyId/approvals",writer,async(req,res,next)
  if(!id.success||!body.success){res.status(400).json({error:{code:"VALIDATION_ERROR",message:"Provide a valid approval request."}});return;}
  const org=req.tenant!.organizationId;const policy=await prisma.governancePolicy.findFirst({where:{id:id.data,organizationId:org}});
  if(!policy){res.status(404).json({error:{code:"POLICY_NOT_FOUND",message:"Policy not found."}});return;}
- const approval=await prisma.governanceApproval.create({data:{organizationId:org,policyId:policy.id,requestedBy:req.auth!.userId,decision:"PENDING",comment:body.data.comment}});
+ const approval=await prisma.governanceApproval.create({data:{organizationId:org,policyId:policy.id,requestedBy:req.auth!.userId,requestDescription:body.data.request,decision:"PENDING",comment:body.data.comment}});
  await audit(org,req.auth!.userId,"GOVERNANCE_APPROVAL_REQUESTED","GovernanceApproval",approval.id,{policyId:policy.id});
  res.status(201).json({data:{approval}});
 }catch(e){next(e);}});
