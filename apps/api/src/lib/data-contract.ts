@@ -69,7 +69,7 @@ export function canTransitionContractStatus(from: string, to: string): boolean {
 export const contractFieldsSchema = z.array(z.object({
   name: z.string().trim().min(1).max(128),
   type: z.string().trim().min(1).max(80),
-  nullable: z.boolean().optional(),
+  nullable: z.boolean().default(false),
 })).max(500).superRefine((fields, context) => {
   const seen = new Set<string>();
   fields.forEach((field, index) => {
