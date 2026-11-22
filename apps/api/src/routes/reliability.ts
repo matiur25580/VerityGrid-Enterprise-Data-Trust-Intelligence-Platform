@@ -126,14 +126,16 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
       `),
     ]);
     const quality = new Map(qualityRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
-    const incident = new Map(incidentRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));\n    const freshness = new Map(freshnessRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
+    const incident = new Map(incidentRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
+    const freshness = new Map(freshnessRows.map(row => [new Date(row.day).toISOString().slice(0, 10), row]));
     const series = Array.from({ length: days }, (_, index) => {
       const date = new Date(start);
       date.setUTCDate(start.getUTCDate() + index);
       const key = date.toISOString().slice(0, 10);
       const q = quality.get(key);
       const i = incident.get(key);
-      return { date: key, qualityRuns: q?.runs ?? 0, failedRuns: q?.failedRuns ?? 0, averageQualityScore: q?.averageScore ?? null, incidentsCreated: i?.incidents ?? 0, highSeverityIncidents: i?.highSeverity ?? 0 };
+      const f = freshness.get(key);
+      return { date: key, qualityRuns: q?.runs ?? 0, failedRuns: q?.failedRuns ?? 0, averageQualityScore: q?.averageScore ?? null, incidentsCreated: i?.incidents ?? 0, highSeverityIncidents: i?.highSeverity ?? 0, freshnessMonitored: f?.monitored ?? 0, freshnessHealthy: f?.healthy ?? 0, freshnessAtRisk: f?.atRisk ?? 0, freshnessBreached: f?.breached ?? 0, freshnessUnknown: f?.unknown ?? 0 };
     });
     res.json({ data: { generatedAt: new Date().toISOString(), windowDays: days, from: start.toISOString(), through: end.toISOString(), source: "persisted-records", series } });
   } catch (error) { next(error); }
