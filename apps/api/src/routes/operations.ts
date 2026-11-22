@@ -52,7 +52,9 @@ operationsRouter.get("/notification-deliveries",async(req,res,next)=>{try{
  res.json({data:{configured:Boolean(process.env.INCIDENT_WEBHOOK_URL?.trim()),provider:process.env.INCIDENT_WEBHOOK_URL?.trim()?"https-webhook":"disabled",counts:{queued:own([...waiting,...delayed]).length,active:own(active).length,failed:own(failed).length,delivered:own(completed).length},jobs}});
 }catch(e){next(e);}});
 operationsRouter.post("/notification-deliveries/:jobId/retry",admin,async(req,res,next)=>{try{
- const job=await notificationQueue.getJob(req.params.jobId);
+ const jobId=z.string().min(1).max(200).safeParse(req.params.jobId);
+ if(!jobId.success){res.status(400).json({error:{code:"INVALID_NOTIFICATION_ID",message:"Notification ID is invalid."}});return;}
+ const job=await notificationQueue.getJob(jobId.data);
  if(!job||job.data.organizationId!==req.tenant!.organizationId){res.status(404).json({error:{code:"NOTIFICATION_NOT_FOUND",message:"Notification delivery not found in this workspace."}});return;}
  if(await job.getState()!=="failed"){res.status(409).json({error:{code:"NOTIFICATION_NOT_FAILED",message:"Only failed notification deliveries can be retried."}});return;}
  await job.retry();
