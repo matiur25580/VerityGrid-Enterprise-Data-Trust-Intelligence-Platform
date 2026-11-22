@@ -4,6 +4,7 @@ import {
   Workflow, Eye, EyeOff, Building2, ChevronDown,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode, type ChangeEvent } from "react";
+import { OperationsPage } from "./OperationsPage";
 
 type Membership = {
   role: string;
@@ -218,7 +219,7 @@ function App() {
 
           <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Your account is authenticated and your organization membership has been verified.</p></div><span className="strip-status"><i/> Secure session</span></div>
 
-          {activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Quality Center" ? <QualityCenterPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Lineage" ? <DataLineagePage organizationId={activeWorkspace?.id ?? ""} /> : <>
+          {activePage === "Incidents" ? <OperationsPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Quality Center" ? <QualityCenterPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Lineage" ? <DataLineagePage organizationId={activeWorkspace?.id ?? ""} /> : <>
           <div className="section-heading"><div><h2>Platform health</h2><p>Operational indicators from your workspace</p></div><span className="updated">API {apiStatus === "online" ? "connected" : apiStatus === "offline" ? "unavailable" : "checking"} <i className={apiStatus}/></span></div>
 
           <div className="metrics-grid">
