@@ -10,9 +10,19 @@ Phase 6 adds freshness objectives, operational analytics, bounded exports, evide
 - Successful CSV/JSON imports set `DataAsset.lastObservedAt`. Manual catalog records and legacy assets remain UNKNOWN until an observation is recorded. Registering a PostgreSQL source does not establish a live connection or observation.
 - States: HEALTHY, AT_RISK, BREACHED, UNKNOWN (no observation) and UNCONFIGURED (no policy).
 
-Freshness is evaluated on read and by a BullMQ scheduled worker. The worker runs every five minutes by default (override with `FRESHNESS_SCHEDULE_INTERVAL_MS`, minimum 60 seconds), scans policies in bounded pages of 500, and creates one tenant-scoped incident per asset when it becomes at-risk or breached. State changes (including recovery to RESOLVED and later recurrence) are recorded in incident events and audit events. Repeated scheduler ticks are idempotent: unchanged states do not create duplicate incidents or events. Unknown observation timestamps do not create incidents.\n\nThe worker process (`npm run worker` or `npm run worker:dev`) must run alongside the API and requires Redis plus the configured database. The notification provider is still a safe disabled adapter until a real provider is configured; incident creation and audit history work without outbound delivery. The default system actor is a reserved UUID used for worker-authored audit and incident events.
+Freshness is evaluated on read and by a BullMQ scheduled worker. The worker runs every five minutes by default (override with `FRESHNESS_SCHEDULE_INTERVAL_MS`, minimum 60 seconds), scans policies in bounded pages of 500, and creates one tenant-scoped incident per asset when it becomes at-risk or breached. State changes (including recovery to RESOLVED and later recurrence) are recorded in incident events and audit events. Repeated scheduler ticks are idempotent: unchanged states do not create duplicate incidents or events. Unknown observation timestamps do not create incidents.
 
-## Historical trends\n\n- `GET /api/reliability/analytics/trends?days=30` — tenant-scoped daily series for 7–90 days.\n- Includes quality run counts, failed-run counts, mean scored quality, incident creation counts and high-severity incidents.\n- The scheduled freshness worker upserts one `FreshnessSnapshot` per asset per UTC day; trend responses include healthy, at-risk, breached and unknown counts. Repeated worker ticks update that day's snapshot rather than growing unbounded rows.\n- Snapshot history starts when the migration is applied and the worker begins running; prior dates are not fabricated or backfilled.\n- The endpoint fills dates with zero activity and returns persisted-record data only.\n\n## Analytics and exports
+The worker process (`npm run worker` or `npm run worker:dev`) must run alongside the API and requires Redis plus the configured database. The notification provider is still a safe disabled adapter until a real provider is configured; incident creation and audit history work without outbound delivery. The default system actor is a reserved UUID used for worker-authored audit and incident events.
+
+## Historical trends
+
+- `GET /api/reliability/analytics/trends?days=30` — tenant-scoped daily series for 7–90 days.
+- Includes quality run counts, failed-run counts, mean scored quality, incident creation counts and high-severity incidents.
+- The scheduled freshness worker upserts one `FreshnessSnapshot` per asset per UTC day; trend responses include healthy, at-risk, breached and unknown counts. Repeated worker ticks update that day's snapshot rather than growing unbounded rows.
+- Snapshot history starts when the migration is applied and the worker begins running; prior dates are not fabricated or backfilled.
+- The endpoint fills dates with zero activity and returns persisted-record data only.
+
+## Analytics and exports
 
 - `GET /api/reliability/analytics` — tenant-scoped asset/run counts, average persisted quality score, incident status counts and freshness aggregates.
 - `GET /api/reliability/exports?type=quality-runs`
