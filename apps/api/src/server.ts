@@ -26,14 +26,13 @@ const shutdown = (signal: string) => {
       await Promise.all([closeQualityQueues(), closeFreshnessWorker(), closeNotificationQueue()]);
       await prisma.$disconnect();
     } catch (shutdownError) {
-      console.error("Dependency shutdown failed.", { requestId: responseRequestId(), errorCode: shutdownError instanceof Error ? shutdownError.name : "UNKNOWN" });
+      console.error("Dependency shutdown failed.", { errorCode: shutdownError instanceof Error ? shutdownError.name : "UNKNOWN" });
       process.exitCode = 1;
     }
   });
 };
 
 let shuttingDown = false;
-function responseRequestId() { return "shutdown"; }
 const beginShutdown = (signal: string) => { if (shuttingDown) return; shuttingDown = true; shutdown(signal); };
 process.on("SIGINT", () => beginShutdown("SIGINT"));
 process.on("SIGTERM", () => beginShutdown("SIGTERM"));
