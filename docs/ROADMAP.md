@@ -60,7 +60,7 @@
 - [x] Scheduled tenant-scoped SLA evaluation with idempotent incident creation, recovery transitions and audit history
 - [x] Notification-provider hook on freshness incident transitions (delivery remains disabled until configured)
 - [x] Tenant-scoped daily quality, incident and freshness trend series (7–90 day window)
-- [x] Daily freshness snapshots with bounded one-row-per-asset-per-day retention
+- [x] Daily freshness snapshots with a deduplicated one-row-per-asset-per-day key
 - [ ] Live notification-provider configuration and delivery verification
 
 ## Phase 7 — Production hardening
