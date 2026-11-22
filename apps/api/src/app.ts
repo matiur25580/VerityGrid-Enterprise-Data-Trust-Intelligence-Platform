@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { originGuard } from "./middleware/origin-guard";
 import { errorHandler } from "./middleware/error-handler";
 import { requestContext } from "./middleware/request-context";
+import { createApiRateLimiter } from "./middleware/api-rate-limit";
 import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
 import { organizationsRouter } from "./routes/organizations";
@@ -43,6 +44,7 @@ const authLimiter = rateLimit({
 });
 
 app.use("/api/health", healthRouter);
+app.use("/api", createApiRateLimiter());
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth", authRouter);
