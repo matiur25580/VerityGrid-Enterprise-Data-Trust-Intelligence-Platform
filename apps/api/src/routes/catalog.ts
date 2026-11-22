@@ -17,12 +17,90 @@ const classification = z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED
 
 catalogRouter.get("/sources", async (req, res, next) => {
   try {
-    const sources = await prisma.dataSource.findMany({
-      where: { organizationId: req.tenant!.organizationId },
-      include: { _count: { select: { assets: true } } },
-      orderBy: { updatedAt: "desc" },
+    const query = z.object({
+      q: z.string().trim().max(120).optional(),
+      sourceType: z.enum(["POSTGRESQL", "CSV", "JSON"]).optional(),
+      cursor: z.string().uuid().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+    }).safeParse(req.query);
+    if (!query.success) {
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid source filters or pagination parameters." } });
+      return;
+    }
+    const { q, sourceType, cursor, limit } = query.data;
+    const where = {
+      organizationId: req.tenant!.organizationId,
+      ...(sourceType ? { sourceType } : {}),
+      ...(q ? { OR: [
+        { name: { contains: q, mode: "insensitive" as const } },
+        { description: { contains: q, mode: "insensitive" as const } },
+      ] } : {}),
+    };
+    if (cursor) {
+      const cursorSource = await prisma.dataSource.findFirst({
+        where: { ...where, id: cursor },
+        select: { id: true },
+      });
+      if (!cursorSource) {
+        res.status(400).json({ error: { code: "INVALID_CURSOR", message: "The source cursor is invalid for this workspace or filter set." } });
+        return;
+      }
+    }
+    const [results, totalCount] = await Promise.all([
+      prisma.dataSource.findMany({
+        where,
+        select: {
+          id: true, name: true, sourceType: true, description: true,
+          createdAt: true, updatedAt: true,
+          _count: { select: { assets: true } },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        take: limit + 1,
+      }),
+      prisma.dataSource.count({ where }),
+    ]);
+    const hasMore = results.length > limit;
+    const sources = hasMore ? results.slice(0, limit) : results;
+    res.json({
+      data: {
+        sources,
+        totalCount,
+        pagination: {
+          limit,
+          hasMore,
+          nextCursor: hasMore ? sources[sources.length - 1]?.id ?? null : null,
+        },
+      },
     });
-    res.json({ data: { sources } });
+  } catch (error) { next(error); }
+});
+
+catalogRouter.get("/sources/:sourceId", async (req, res, next) => {
+  try {
+    const parsed = z.string().uuid().safeParse(req.params.sourceId);
+    if (!parsed.success) {
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "A valid source ID is required." } });
+      return;
+    }
+    const source = await prisma.dataSource.findFirst({
+      where: { id: parsed.data, organizationId: req.tenant!.organizationId },
+      select: {
+        id: true, name: true, sourceType: true, description: true,
+        createdAt: true, updatedAt: true,
+        _count: { select: { assets: true } },
+        assets: {
+          select: { id: true, name: true, fullyQualifiedName: true, assetType: true, classification: true, updatedAt: true },
+          orderBy: { updatedAt: "desc" },
+          take: 20,
+        },
+      },
+    });
+    if (!source) {
+      res.status(404).json({ error: { code: "SOURCE_NOT_FOUND", message: "The source does not exist in this workspace." } });
+      return;
+    }
+    res.json({ data: { source } });
   } catch (error) { next(error); }
 });
 
@@ -52,29 +130,56 @@ catalogRouter.get("/assets", async (req, res, next) => {
       q: z.string().trim().max(120).optional(),
       classification: classification.optional(),
       sourceId: z.string().uuid().optional(),
+      cursor: z.string().uuid().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(100),
     }).safeParse(req.query);
     if (!query.success) {
-      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid catalog filters." } });
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid catalog filters or pagination parameters." } });
       return;
     }
-    const { q, classification: level, sourceId } = query.data;
-    const assets = await prisma.dataAsset.findMany({
-      where: {
-        organizationId: req.tenant!.organizationId,
-        ...(level ? { classification: level } : {}),
-        ...(sourceId ? { sourceId } : {}),
-        ...(q ? { OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { fullyQualifiedName: { contains: q, mode: "insensitive" } },
-          { description: { contains: q, mode: "insensitive" } },
-          { ownerName: { contains: q, mode: "insensitive" } },
-        ] } : {}),
-      },
+    const { q, classification: level, sourceId, cursor, limit } = query.data;
+    const where: Prisma.DataAssetWhereInput = {
+      organizationId: req.tenant!.organizationId,
+      ...(level ? { classification: level } : {}),
+      ...(sourceId ? { sourceId } : {}),
+      ...(q ? { OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { fullyQualifiedName: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { ownerName: { contains: q, mode: "insensitive" } },
+      ] } : {}),
+    };
+
+    if (cursor) {
+      const cursorAsset = await prisma.dataAsset.findFirst({
+        where: { ...where, id: cursor },
+        select: { id: true },
+      });
+      if (!cursorAsset) {
+        res.status(400).json({ error: { code: "INVALID_CURSOR", message: "The catalog cursor is invalid for this workspace or filter set." } });
+        return;
+      }
+    }
+
+    const results = await prisma.dataAsset.findMany({
+      where,
       include: { source: { select: { id: true, name: true, sourceType: true } } },
-      orderBy: { updatedAt: "desc" },
-      take: 100,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit + 1,
     });
-    res.json({ data: { assets } });
+    const hasMore = results.length > limit;
+    const assets = hasMore ? results.slice(0, limit) : results;
+    res.json({
+      data: {
+        assets,
+        pagination: {
+          limit,
+          hasMore,
+          nextCursor: hasMore ? assets[assets.length - 1]?.id ?? null : null,
+        },
+      },
+    });
   } catch (error) { next(error); }
 });
 
@@ -184,12 +289,7 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV must contain a header and at least one data row." } });
         return;
       }
-      const headerRow = rows[0];
-      if (!headerRow) {
-        res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV header row is missing." } });
-        return;
-      }
-      const headers = headerRow.map((header) => header.trim());
+      const headers = rows[0].map((header) => header.trim());
       if (headers.some((header) => !header) || new Set(headers).size !== headers.length || headers.length > 500) {
         res.status(400).json({ error: { code: "INVALID_IMPORT", message: "CSV headers must be unique, non-empty and limited to 500 columns." } });
         return;
