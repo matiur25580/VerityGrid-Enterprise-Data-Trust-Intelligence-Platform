@@ -7,11 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum OrganizationStatus { ACTIVE SUSPENDED }
-enum MembershipRole { OWNER ADMIN DATA_STEWARD DATA_ENGINEER ANALYST VIEWER }
-enum DataSourceType { POSTGRESQL CSV JSON }
-enum DataClassification { PUBLIC INTERNAL CONFIDENTIAL RESTRICTED }
-enum QualityRuleType { MIN_ROW_COUNT COLUMN_EXISTS NOT_NULL MAX_NULL_PERCENT UNIQUE }
+enum OrganizationStatus {\n  ACTIVE\n  SUSPENDED\n}
+enum MembershipRole {\n  OWNER\n  ADMIN\n  DATA_STEWARD\n  DATA_ENGINEER\n  ANALYST\n  VIEWER\n}
+enum DataSourceType {\n  POSTGRESQL\n  CSV\n  JSON\n}
+enum DataClassification {\n  PUBLIC\n  INTERNAL\n  CONFIDENTIAL\n  RESTRICTED\n}
+enum QualityRuleType {\n  MIN_ROW_COUNT\n  COLUMN_EXISTS\n  NOT_NULL\n  MAX_NULL_PERCENT\n  UNIQUE\n}
 
 model Organization {
   id String @id @default(uuid()) @db.Uuid
