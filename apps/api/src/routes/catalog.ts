@@ -17,12 +17,86 @@ const classification = z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED
 
 catalogRouter.get("/sources", async (req, res, next) => {
   try {
-    const sources = await prisma.dataSource.findMany({
-      where: { organizationId: req.tenant!.organizationId },
-      include: { _count: { select: { assets: true } } },
-      orderBy: { updatedAt: "desc" },
+    const query = z.object({
+      q: z.string().trim().max(120).optional(),
+      sourceType: z.enum(["POSTGRESQL", "CSV", "JSON"]).optional(),
+      cursor: z.string().uuid().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+    }).safeParse(req.query);
+    if (!query.success) {
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid source filters or pagination parameters." } });
+      return;
+    }
+    const { q, sourceType, cursor, limit } = query.data;
+    const where = {
+      organizationId: req.tenant!.organizationId,
+      ...(sourceType ? { sourceType } : {}),
+      ...(q ? { OR: [
+        { name: { contains: q, mode: "insensitive" as const } },
+        { description: { contains: q, mode: "insensitive" as const } },
+      ] } : {}),
+    };
+    if (cursor) {
+      const cursorSource = await prisma.dataSource.findFirst({
+        where: { ...where, id: cursor },
+        select: { id: true },
+      });
+      if (!cursorSource) {
+        res.status(400).json({ error: { code: "INVALID_CURSOR", message: "The source cursor is invalid for this workspace or filter set." } });
+        return;
+      }
+    }
+    const results = await prisma.dataSource.findMany({
+      where,
+      select: {
+        id: true, name: true, sourceType: true, description: true,
+        createdAt: true, updatedAt: true,
+        _count: { select: { assets: true } },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit + 1,
     });
-    res.json({ data: { sources } });
+    const hasMore = results.length > limit;
+    const sources = hasMore ? results.slice(0, limit) : results;
+    res.json({
+      data: {
+        sources,
+        pagination: {
+          limit,
+          hasMore,
+          nextCursor: hasMore ? sources[sources.length - 1]?.id ?? null : null,
+        },
+      },
+    });
+  } catch (error) { next(error); }
+});
+
+catalogRouter.get("/sources/:sourceId", async (req, res, next) => {
+  try {
+    const parsed = z.string().uuid().safeParse(req.params.sourceId);
+    if (!parsed.success) {
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "A valid source ID is required." } });
+      return;
+    }
+    const source = await prisma.dataSource.findFirst({
+      where: { id: parsed.data, organizationId: req.tenant!.organizationId },
+      select: {
+        id: true, name: true, sourceType: true, description: true,
+        createdAt: true, updatedAt: true,
+        _count: { select: { assets: true } },
+        assets: {
+          select: { id: true, name: true, fullyQualifiedName: true, assetType: true, classification: true, updatedAt: true },
+          orderBy: { updatedAt: "desc" },
+          take: 20,
+        },
+      },
+    });
+    if (!source) {
+      res.status(404).json({ error: { code: "SOURCE_NOT_FOUND", message: "The source does not exist in this workspace." } });
+      return;
+    }
+    res.json({ data: { source } });
   } catch (error) { next(error); }
 });
 
