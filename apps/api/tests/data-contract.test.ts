@@ -68,10 +68,12 @@ describe("data contract field schema validation", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("accepts valid unique field definitions", () => {
-    expect(contractFieldsSchema.safeParse([
-      { name: "customer_id", type: "NUMBER", nullable: false },
+  it("accepts valid unique field definitions and normalizes omitted nullability", () => {
+    const parsed = contractFieldsSchema.safeParse([
+      { name: "customer_id", type: "NUMBER" },
       { name: "email", type: "STRING", nullable: true },
-    ]).success).toBe(true);
+    ]);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data[0]?.nullable).toBe(false);
   });
 });
