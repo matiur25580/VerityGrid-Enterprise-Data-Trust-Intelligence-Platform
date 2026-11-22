@@ -248,6 +248,8 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
   const [sources, setSources] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [classification, setClassification] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [importClassification, setImportClassification] = useState("INTERNAL");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -300,7 +302,7 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
       await api("/api/catalog/assets/import", {
         method: "POST",
         headers: { "x-organization-id": organizationId },
-        body: JSON.stringify({ name: file.name.replace(/\.(csv|json)$/i, ""), format, content }),
+        body: JSON.stringify({ name: file.name.replace(/\.(csv|json)$/i, ""), format, content, ownerName: ownerName.trim() || undefined, classification: importClassification }),
       });
       setMessage(`${file.name} imported successfully.`);
       await loadCatalog();
