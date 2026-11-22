@@ -45,6 +45,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
   const [authError, setAuthError] = useState("");
   const [notice, setNotice] = useState("");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
@@ -100,6 +101,7 @@ function App() {
       body.organizationName = String(form.get("organizationName") ?? "").trim();
     }
 
+    setAuthSubmitting(true);
     try {
       await api(authMode === "register" ? "/api/auth/register" : "/api/auth/login", {
         method: "POST",
@@ -112,6 +114,8 @@ function App() {
       setNotice(authMode === "register" ? "Your workspace is ready. Welcome to VerityGrid." : "You are securely signed in.");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Authentication failed.");
+    } finally {
+      setAuthSubmitting(false);
     }
   }
 
@@ -152,6 +156,7 @@ function App() {
         error={authError}
         notice={notice}
         apiStatus={apiStatus}
+        busy={authSubmitting}
       />
     );
   }
@@ -244,6 +249,7 @@ function AuthScreen({
   error: string;
   notice: string;
   apiStatus: "checking" | "online" | "offline";
+  busy: boolean;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const registering = mode === "register";
@@ -272,7 +278,7 @@ function AuthScreen({
           <input id="email" name="email" type="email" placeholder="you@company.com" autoComplete="email" maxLength={254} required/>
           <div className="password-label"><label htmlFor="password">Password</label>{registering && <span>At least 12 characters</span>}</div>
           <div className="password-input"><input id="password" name="password" type={showPassword ? "text" : "password"} placeholder={registering ? "Create a strong password" : "Enter your password"} autoComplete={registering ? "new-password" : "current-password"} minLength={registering ? 12 : 1} maxLength={72} required/><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div>
-          <button className="auth-submit" type="submit">{registering ? "Create secure workspace" : "Sign in securely"} <ArrowUpRight size={17}/></button>
+          <button className="auth-submit" type="submit" disabled={busy}>{busy ? "Please wait…" : registering ? "Create secure workspace" : "Sign in securely"} {busy ? <LoaderCircle className="spin" size={16}/> : <ArrowUpRight size={17}/>}</button>
         </form>
 
         <div className="auth-footer"><span><ShieldCheck size={14}/> Protected with secure sessions</span><span className="api-indicator"><i className={apiStatus}/> API {apiStatus}</span></div>
