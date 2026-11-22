@@ -51,6 +51,3 @@ jobs:
             - Switch CI dependency installation from `npm install` to `npm ci`.
 
             Please review the lockfile diff and allow the normal CI and dependency-review workflows to complete before merging.
-          labels: |
-            dependencies
-            build
