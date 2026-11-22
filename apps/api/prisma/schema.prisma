@@ -7,19 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum OrganizationStatus {
-  ACTIVE
-  SUSPENDED
-}
-
-enum MembershipRole {
-  OWNER
-  ADMIN
-  DATA_STEWARD
-  DATA_ENGINEER
-  ANALYST
-  VIEWER
-}
+enum OrganizationStatus { ACTIVE SUSPENDED }
+enum MembershipRole { OWNER ADMIN DATA_STEWARD DATA_ENGINEER ANALYST VIEWER }
+enum DataSourceType { POSTGRESQL CSV JSON }
+enum DataClassification { PUBLIC INTERNAL CONFIDENTIAL RESTRICTED }
 
 model Organization {
   id          String               @id @default(uuid()) @db.Uuid
@@ -30,7 +21,7 @@ model Organization {
   updatedAt   DateTime              @updatedAt
   memberships Membership[]
   dataAssets  DataAsset[]
-
+  dataSources DataSource[]
   @@index([status, createdAt])
 }
 
@@ -54,7 +45,6 @@ model Session {
   revokedAt DateTime?
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId, expiresAt])
   @@index([expiresAt])
 }
@@ -67,25 +57,46 @@ model Membership {
   createdAt      DateTime       @default(now())
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([organizationId, userId])
   @@index([userId, role])
   @@index([organizationId, role])
 }
 
-model DataAsset {
-  id                 String       @id @default(uuid()) @db.Uuid
-  organizationId     String       @db.Uuid
-  name               String       @db.VarChar(180)
-  fullyQualifiedName String       @db.VarChar(512)
-  description        String?      @db.Text
-  assetType          String       @db.VarChar(40)
-  metadata           Json         @default("{}")
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+model DataSource {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  name           String         @db.VarChar(160)
+  sourceType     DataSourceType
+  description    String?        @db.Text
+  metadata       Json           @default("{}")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assets         DataAsset[]
+  @@unique([organizationId, name])
+  @@index([organizationId, sourceType, createdAt])
+}
 
+model DataAsset {
+  id                 String              @id @default(uuid()) @db.Uuid
+  organizationId     String              @db.Uuid
+  sourceId           String?             @db.Uuid
+  name               String              @db.VarChar(180)
+  fullyQualifiedName String              @db.VarChar(512)
+  description        String?             @db.Text
+  assetType          String              @db.VarChar(40)
+  ownerName          String?             @db.VarChar(120)
+  classification     DataClassification   @default(INTERNAL)
+  rowCount           Int?
+  schema             Json                @default("[]")
+  metadata           Json                @default("{}")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  source             DataSource?          @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   @@unique([organizationId, fullyQualifiedName])
   @@index([organizationId, assetType, createdAt])
   @@index([organizationId, name])
+  @@index([organizationId, classification])
+}
 }
