@@ -28,7 +28,9 @@
 - [x] Organization-scoped source registry with membership and role enforcement
 - [x] CSV/JSON import with 900 KB payload, row and column limits
 - [x] Dataset metadata and automatic field/type/nullability discovery
-- [x] Ownership, classification and tenant-scoped catalog search\n- [ ] PostgreSQL connection validation and live schema introspection\n- [ ] Object-storage-backed large-file ingestion
+- [x] Ownership, classification and tenant-scoped catalog search
+- [ ] PostgreSQL connection validation and live schema introspection
+- [ ] Object-storage-backed large-file ingestion
 
 ## Phase 4 — Quality and lineage
 - [ ] Versioned validation rules
