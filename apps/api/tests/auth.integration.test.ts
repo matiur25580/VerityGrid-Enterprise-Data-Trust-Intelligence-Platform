@@ -180,7 +180,7 @@ describe("identity and tenant security", () => {
     expect(freshness.body.data.items.find((item: any) => item.assetId === assetId).status).toBe("HEALTHY");
     const analytics = await client.get("/api/reliability/analytics")
       .set("x-organization-id", organizationId).expect(200);
-    expect(analytics.body.data.assets).toBe(1);
+    expect(analytics.body.data.assets).toBe(2);
     expect(analytics.body.data.qualityRuns).toBe(1);
     const exportResponse = await client.get("/api/reliability/exports?type=quality-runs")
       .set("x-organization-id", organizationId).expect(200);
