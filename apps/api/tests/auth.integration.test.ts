@@ -250,6 +250,35 @@ describe("identity and tenant security", () => {
     expect(catalog.body.data.assets).toHaveLength(1);
     expect(catalog.body.data.assets[0].classification).toBe("CONFIDENTIAL");
 
+    for (const suffix of ["alpha", "bravo", "charlie"]) {
+      await client.post("/api/catalog/assets")
+        .set("x-organization-id", organizationId)
+        .send({
+          name: `pagination-${suffix}`,
+          fullyQualifiedName: `test.pagination_${suffix}`,
+          assetType: "TABLE",
+          schema: [],
+        })
+        .expect(201);
+    }
+    const firstPage = await client.get("/api/catalog/assets?q=pagination&limit=2")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(firstPage.body.data.assets).toHaveLength(2);
+    expect(firstPage.body.data.pagination.hasMore).toBe(true);
+    expect(firstPage.body.data.pagination.nextCursor).toBeTruthy();
+
+    const secondPage = await client.get(`/api/catalog/assets?q=pagination&limit=2&cursor=${firstPage.body.data.pagination.nextCursor}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(secondPage.body.data.assets).toHaveLength(1);
+    expect(secondPage.body.data.pagination.hasMore).toBe(false);
+    expect(secondPage.body.data.pagination.nextCursor).toBeNull();
+    expect(firstPage.body.data.assets.map((asset: any) => asset.id))
+      .not.toContain(secondPage.body.data.assets[0].id);
+
+    await client.get(`/api/catalog/assets?cursor=${randomUUID()}`)
+      .set("x-organization-id", organizationId)
+      .expect(400);
+
     await client
       .get("/api/catalog/assets")
       .set("x-organization-id", randomUUID())
