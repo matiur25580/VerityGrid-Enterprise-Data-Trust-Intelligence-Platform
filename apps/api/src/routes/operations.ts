@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
 import { enqueueQualityJob, qualityQueue, deadLetterQueue } from "../lib/quality-worker";
+import { notificationProvider } from "../lib/notifications";
 
 export const operationsRouter=Router();
 operationsRouter.use(authenticate,requireTenant);
@@ -44,6 +45,7 @@ operationsRouter.post("/incidents",writer,async(req,res,next)=>{try{
  if(body.data.assigneeId&&!await prisma.membership.findFirst({where:{organizationId:req.tenant!.organizationId,userId:body.data.assigneeId}})){res.status(400).json({error:{code:"INVALID_ASSIGNEE",message:"Assignee must be a workspace member."}});return;}
  const incident=await prisma.incident.create({data:{...body.data,organizationId:req.tenant!.organizationId,status:"OPEN",createdBy:req.auth!.userId,sourceKey:"manual:"+randomUUID()}});
  await prisma.incidentEvent.create({data:{organizationId:req.tenant!.organizationId,incidentId:incident.id,actorId:req.auth!.userId,eventType:"CREATED",detail:"Incident created."}});
+ await notificationProvider.incidentCreated({organizationId:req.tenant!.organizationId,incidentId:incident.id,severity:incident.severity});
  await audit(req.tenant!.organizationId,req.auth!.userId,"INCIDENT_CREATED","Incident",incident.id,{severity:incident.severity});
  res.status(201).json({data:{incident}});
 }catch(e){next(e);}});
