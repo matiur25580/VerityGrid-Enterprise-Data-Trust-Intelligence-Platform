@@ -82,12 +82,26 @@
 - [x] Security reporting policy and pull-request engineering checklist
 - [x] PostgreSQL custom-format backup and guarded restore utilities with SHA-256 verification
 - [x] Production readiness, release, backup and recovery runbook
-- [ ] Commit reproducible dependency lockfile and verify clean installs
+- [x] Commit reproducible workspace dependency lockfile and verify clean installs with `npm ci`
 - [x] Add manual GitHub Actions workflow to generate, clean-install verify and propose the lockfile via pull request
-- [ ] Run CI and resolve all typecheck, build, migration and integration failures
+- [x] Pass main-branch CI on Node.js 22, 24 and 26; CodeQL security analysis passed
 - [ ] Execute a PostgreSQL backup and restore rehearsal against an isolated database
 - [ ] Add encrypted off-site backup automation and scheduled restore verification
 - [ ] Complete threat model, independent security review and penetration testing
 - [ ] Perform load, stress and failure-mode testing
 - [ ] Configure managed observability, alerting and measurable SLO/RTO/RPO targets
 - [ ] Capture and publish 12 verified dashboard screenshots
+
+
+## Next industry-facing differentiators
+
+Prioritize these after the current platform baseline, with each capability delivered behind tenant-aware APIs and evidence-backed tests:
+
+- **Data contracts and schema evolution:** versioned producer/consumer contracts, compatibility checks, schema drift diffs and contract-violation incidents.
+- **Policy-as-code:** reusable classification, retention and quality policies with dry-run evaluation and maker-checker enforcement.
+- **OpenTelemetry:** correlated traces across API and workers, queue latency and failure telemetry, and measurable service-level indicators.
+- **Connector framework:** least-privilege credentials, incremental checkpoints, dry-run validation and connector health.
+- **Audit evidence packs:** tamper-evident manifests and exportable evidence for governance reviews.
+- **SLO and error-budget operations:** service objectives, burn-rate alerting and ownership for freshness and quality objectives.
+
+These are planned differentiators, not implemented product claims.

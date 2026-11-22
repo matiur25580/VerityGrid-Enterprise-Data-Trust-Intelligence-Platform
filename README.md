@@ -5,7 +5,7 @@
 
 The product is designed around a practical enterprise question: *Can teams trust this data, understand its dependencies, detect when it becomes unreliable, and prove how they responded?*
 
-> **Project status — active engineering build:** Core catalog, quality, lineage, governance and reliability capabilities are implemented, including tenant-safe asset/source pagination. Main-branch CI passed on Node.js 22, 24 and 26 after the Prisma baseline and integration-test fixes; CodeQL also passed. Production deployment, verified dashboard screenshots and deployment-specific operational controls remain outstanding. This repository must not be represented as independently audited or production-certified.
+> **Project status — active engineering build:** Core catalog, quality, lineage, governance and reliability capabilities are implemented, including tenant-safe asset/source pagination. The reproducible npm workspace lockfile is committed and CI uses `npm ci`. Main-branch CI passed on Node.js 22, 24 and 26; CodeQL passed. Production deployment, verified dashboard screenshots and deployment-specific operational controls remain outstanding. This repository must not be represented as independently audited or production-certified.
 
 ---
 
@@ -297,7 +297,22 @@ For the final gallery, place one image per row in numeric order, use descriptive
 
 ---
 
-## 10. Current product boundaries
+## 10. Enterprise roadmap: next high-value capabilities
+
+The current product foundation is intentionally evidence-first. The next differentiators should deepen governance and operational trust without overstating integrations:
+
+1. **Data contracts and schema drift** — versioned producer/consumer contracts, compatibility checks, schema-change diffs, approval gates and drift incidents.
+2. **Policy-as-code governance** — reusable classification, retention and quality policies with simulation/preview before enforcement.
+3. **OpenTelemetry observability** — trace correlation across API and workers, queue latency, job outcomes and service-level indicators.
+4. **Connector framework** — credential-isolated, least-privilege connectors with dry-run validation, incremental sync checkpoints and connector health.
+5. **Evidence export and audit packs** — signed manifest, immutable event references and exportable control evidence for assurance workflows.
+6. **Operational SLOs** — configurable service objectives, error-budget burn alerts and explicit freshness/quality objective ownership.
+
+These are roadmap candidates, not claims of shipped functionality. Each should be delivered with tenant-isolation tests, migration coverage, authorization checks, audit events and documented failure behavior.
+
+---
+
+## 11. Current product boundaries
 
 The following are intentionally explicit so that product claims remain evidence-based:
 
@@ -311,7 +326,7 @@ The following are intentionally explicit so that product claims remain evidence-
 
 ---
 
-## 11. Roadmap
+## 12. Roadmap
 
 - [x] Multi-tenant identity and workspace access
 - [x] Catalog, profiling, quality validation and lineage
@@ -321,8 +336,8 @@ The following are intentionally explicit so that product claims remain evidence-
 - [x] Retryable webhook notification foundation and Operations Center visibility
 - [x] CI, CodeQL, Dependabot, request correlation and readiness probe foundations
 - [x] PostgreSQL backup/restore scripts and operational runbook
-- [ ] Commit a reproducible dependency lockfile and verify clean installs
-- [ ] Run and fix all CI checks on the default branch
+- [x] Commit a reproducible workspace dependency lockfile and use `npm ci` in CI
+- [x] Pass main-branch CI on Node.js 22, 24 and 26; pass CodeQL security analysis
 - [ ] Complete threat model, penetration testing and load/failure testing
 - [ ] Add encrypted off-site backups and scheduled restore rehearsals
 - [ ] Add managed observability, alerting and explicit SLO/RTO/RPO targets
@@ -331,7 +346,7 @@ The following are intentionally explicit so that product claims remain evidence-
 
 ---
 
-## 12. Documentation
+## 13. Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Development Roadmap](docs/ROADMAP.md)
@@ -349,7 +364,7 @@ The following are intentionally explicit so that product claims remain evidence-
 
 ---
 
-## 13. Project scope
+## 14. Project scope
 
 VerityGrid is an engineering portfolio project demonstrating modern data-platform architecture and operational design. It is not a certified compliance product, a managed data observability service, or a substitute for specialist legal, privacy or security advice.
 
