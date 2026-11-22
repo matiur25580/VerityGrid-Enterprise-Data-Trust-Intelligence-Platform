@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "description": "Enterprise Data Trust, Intelligence & Reliability Platform",
-  "workspaces": ["apps/api", "apps/web"],
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @veritygrid/api\" \"npm run dev -w @veritygrid/web\"",
     "build": "npm run build -w @veritygrid/api && npm run build -w @veritygrid/web",
     "typecheck": "npm run typecheck -w @veritygrid/api && npm run typecheck -w @veritygrid/web",
     "db:generate": "npm run db:generate -w @veritygrid/api",
     "db:migrate": "npm run db:migrate -w @veritygrid/api",
-    "db:studio": "npm run db:studio -w @veritygrid/api"
+    "db:studio": "npm run db:studio -w @veritygrid/api",
+    "test": "npm run test -w @veritygrid/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
