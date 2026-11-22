@@ -1,7 +1,8 @@
 import express from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { createApiRateLimiter } from "../src/middleware/api-rate-limit";
+import { closeRateLimitRedis } from "../src/lib/rate-limit-store";
 
 describe("API rate limiting", () => {
   it("allows requests within the configured window and returns a safe 429 response after the limit", async () => {
