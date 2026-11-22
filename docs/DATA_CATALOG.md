@@ -32,7 +32,7 @@ Send JSON with:
 }
 ```
 
-For JSON, `content` must be a non-empty array of objects. Imports are limited to 900 KB of text, 10,000 records and 500 fields. CSV requires unique, non-empty headers and consistent row widths. The API infers basic NUMBER, BOOLEAN, DATETIME and STRING types and records nullable fields. A small sample of up to five rows is stored as metadata to support future preview features.
+For JSON, `content` must be a non-empty array of objects. Imports are limited to 900 KB of text, 10,000 records and 500 fields. CSV requires unique, non-empty headers and consistent row widths. The API infers basic NUMBER, BOOLEAN, DATETIME and STRING types and records nullable fields. Raw row values are not copied into catalog metadata; only structural schema and import metadata are persisted.
 
 The current import endpoint accepts file contents as a JSON request field; the web UI reads a selected local CSV/JSON file and submits its text. Large-file streaming, object storage, malware scanning, advanced CSV dialects and background ingestion are not part of this milestone.
 
