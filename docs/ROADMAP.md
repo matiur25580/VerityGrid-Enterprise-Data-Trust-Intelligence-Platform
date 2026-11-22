@@ -73,7 +73,7 @@
 - [x] Server-generated request correlation IDs and privacy-conscious structured HTTP logs
 - [x] API liveness and PostgreSQL readiness endpoints
 - [x] Global API rate limiting with stricter authentication limits
-- [x] Redis-backed atomic distributed API rate-limit counters and graceful connection shutdown (runtime verification pending)
+- [x] Redis-backed atomic distributed API and authentication rate-limit counters with separate namespaces and graceful connection shutdown (runtime verification pending)
 - [x] Graceful API shutdown closes quality, freshness and notification Redis queues
 - [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, dependency audit, typecheck and builds (execution pending)
 - [x] CodeQL security analysis and Dependabot dependency update automation
