@@ -81,7 +81,7 @@ reliabilityRouter.get("/analytics", async (req, res, next) => {
       averageQualityScore: runAggregate._avg.score === null ? null : Number(runAggregate._avg.score.toFixed(2)),
       incidentsByStatus: Object.fromEntries(incidentGroups.map(g => [g.status, g._count._all])),
       freshness: { monitored: freshness.length, healthy: freshness.filter(x => x.status === "HEALTHY").length, atRisk: freshness.filter(x => x.status === "AT_RISK").length, breached: freshness.filter(x => x.status === "BREACHED").length, unknown: freshness.filter(x => x.status === "UNKNOWN").length },
-    } } });
+    } });
   } catch (error) { next(error); }
 });
 
