@@ -17,6 +17,8 @@ The product is designed around a practical enterprise question: *Can teams trust
 - Automatic schema and profiling metadata discovery.
 - Asset ownership and data-classification metadata.
 - Tenant-scoped catalog search and access controls.
+- Filterable, cursor-paginated source discovery with workspace-bound cursors.
+- Source detail views with bounded recent-asset previews and aggregate asset counts; source metadata is not exposed by discovery endpoints.
 - PostgreSQL source registration is currently metadata-only; live external database introspection is a planned connector capability.
 
 ### Data quality and lineage
