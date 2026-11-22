@@ -1,11 +1,12 @@
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, CheckCircle2, CircleHelp,
-  Database, GitBranch, LayoutDashboard, LoaderCircle, LogOut, Search, ShieldCheck,
+  Database, FileCheck2, GitBranch, LayoutDashboard, LoaderCircle, LogOut, Search, ShieldCheck,
   Workflow, Eye, EyeOff, Building2, ChevronDown,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode, type ChangeEvent } from "react";
 import { OperationsPage } from "./OperationsPage";
 import { ReliabilityPage } from "./ReliabilityPage";
+import { DataContractsPage } from "./DataContractsPage";
 
 type Membership = {
   role: string;
@@ -17,6 +18,7 @@ type AuthMode = "login" | "register";
 const navigation = [
   { label: "Overview", icon: LayoutDashboard },
   { label: "Data Catalog", icon: Database },
+  { label: "Data Contracts", icon: FileCheck2 },
   { label: "Data Lineage", icon: GitBranch },
   { label: "Quality Center", icon: ShieldCheck },
   { label: "Pipelines", icon: Workflow },
@@ -221,7 +223,7 @@ function App() {
 
           <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Your account is authenticated and your organization membership has been verified.</p></div><span className="strip-status"><i/> Secure session</span></div>
 
-          {activePage === "Reliability" ? <ReliabilityPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Incidents" ? <OperationsPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Quality Center" ? <QualityCenterPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Lineage" ? <DataLineagePage organizationId={activeWorkspace?.id ?? ""} /> : <>
+          {activePage === "Data Contracts" ? <DataContractsPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Reliability" ? <ReliabilityPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Incidents" ? <OperationsPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Catalog" ? <DataCatalogPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Quality Center" ? <QualityCenterPage organizationId={activeWorkspace?.id ?? ""} /> : activePage === "Data Lineage" ? <DataLineagePage organizationId={activeWorkspace?.id ?? ""} /> : <>
           <div className="section-heading"><div><h2>Platform health</h2><p>Operational indicators from your workspace</p></div><span className="updated">API {apiStatus === "online" ? "connected" : apiStatus === "offline" ? "unavailable" : "checking"} <i className={apiStatus}/></span></div>
 
           <div className="metrics-grid">
