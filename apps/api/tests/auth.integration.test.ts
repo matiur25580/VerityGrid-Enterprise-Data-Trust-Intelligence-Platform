@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
+import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { app } from "../src/app";
 import { prisma } from "../src/lib/prisma";
@@ -7,6 +8,7 @@ import { prisma } from "../src/lib/prisma";
 const email = `phase2-${randomUUID()}@veritygrid.test`;
 const password = "A-unique-test-password-2026";
 let organizationId = "";
+let reviewerUserId = "";
 
 describe("identity and tenant security", () => {
   beforeAll(async () => {
@@ -17,6 +19,7 @@ describe("identity and tenant security", () => {
     if (organizationId) {
       await prisma.organization.deleteMany({ where: { id: organizationId } });
     }
+    if (reviewerUserId) await prisma.user.deleteMany({ where: { id: reviewerUserId } });
     await prisma.user.deleteMany({ where: { email } });
     await prisma.$disconnect();
   });
@@ -140,6 +143,24 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId).send({}).expect(409);
     await client.get("/api/reliability/freshness")
       .set("x-organization-id", randomUUID()).expect(403);
+
+    const reviewerEmail = `phase6-reviewer-${randomUUID()}@veritygrid.test`;
+    const reviewer = await prisma.user.create({ data: {
+      email: reviewerEmail, passwordHash: await bcrypt.hash("A-second-test-password-2026", 12), displayName: "Independent Reviewer",
+    } });
+    reviewerUserId = reviewer.id;
+    await prisma.membership.create({ data: { organizationId, userId: reviewer.id, role: "ADMIN" } });
+    const reviewerClient = request.agent(app);
+    await reviewerClient.post("/api/auth/login").send({ email: reviewerEmail, password: "A-second-test-password-2026" }).expect(200);
+    await reviewerClient.patch(`/api/operations/approvals/${actionRequest.body.data.approvalId}`)
+      .set("x-organization-id", organizationId)
+      .send({ decision: "APPROVED", comment: "Reviewed independently and approved." }).expect(200);
+    await reviewerClient.post(`/api/reliability/actions/${actionRequest.body.data.approvalId}/execute`)
+      .set("x-organization-id", organizationId).send({}).expect(200);
+    const changedAsset = await reviewerClient.get("/api/catalog/assets?q=orders")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(changedAsset.body.data.assets[0].classification).toBe("RESTRICTED");
+    await reviewerClient.post("/api/auth/logout").expect(200);
 
     const downstream = await client.post("/api/catalog/assets")
       .set("x-organization-id", organizationId)
