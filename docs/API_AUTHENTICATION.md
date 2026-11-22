@@ -92,3 +92,7 @@ Common status codes: 400 validation/context input, 401 missing or invalid sessio
 ## Before deployment
 
 Run dependency installation, Prisma client generation, database migration, API/web typechecks, production builds and automated integration tests. Those checks have not been run as part of this repository update. Add email verification, password recovery, audit events, session cleanup and a deployment-specific CSRF/threat review before production use.
+
+## Integration tests
+
+Run `npm test` from the repository root after installing dependencies, starting PostgreSQL and applying the Prisma schema. The API integration suite exercises registration, authenticated membership lookup, tenant access denial, role checks, session rotation, logout and login. The suite has been added but has not yet been executed in this environment.
