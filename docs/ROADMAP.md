@@ -10,7 +10,7 @@
 - [ ] Install dependencies and verify clean builds
 - [ ] Add automated API and frontend test runners
 - [x] Add database migrations and GitHub Actions CI workflow (execution pending)
-- [ ] Add frontend automated test runner
+- [x] Add frontend Vitest runner and error-boundary regression coverage (execution pending)
 - [x] Add top-level React error boundary with a safe reload fallback (manual verification pending)
 - [x] Extend API integration coverage for server-owned correlation IDs and query-string-safe completion logs (execution pending)
 
