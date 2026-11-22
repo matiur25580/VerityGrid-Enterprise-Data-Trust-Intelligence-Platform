@@ -68,9 +68,19 @@
 - [ ] Configure a real endpoint and verify live notification delivery
 
 ## Phase 7 — Production hardening
-- [ ] Threat model and security review
-- [ ] Load and failure-mode testing
-- [ ] Backup and restore verification
-- [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, typecheck and builds (execution pending)
+- [x] Server-generated request correlation IDs and privacy-conscious structured HTTP logs
+- [x] API liveness and PostgreSQL readiness endpoints
+- [x] Graceful API shutdown closes quality, freshness and notification Redis queues
+- [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, dependency audit, typecheck and builds (execution pending)
 - [x] CodeQL security analysis and Dependabot dependency update automation
-- [ ] Deployment runbooks and environment documentation
+- [x] Security reporting policy and pull-request engineering checklist
+- [x] PostgreSQL custom-format backup and guarded restore utilities with SHA-256 verification
+- [x] Production readiness, release, backup and recovery runbook
+- [ ] Commit reproducible dependency lockfile and verify clean installs
+- [ ] Run CI and resolve all typecheck, build, migration and integration failures
+- [ ] Execute a PostgreSQL backup and restore rehearsal against an isolated database
+- [ ] Add encrypted off-site backup automation and scheduled restore verification
+- [ ] Complete threat model, independent security review and penetration testing
+- [ ] Perform load, stress and failure-mode testing
+- [ ] Configure managed observability, alerting and measurable SLO/RTO/RPO targets
+- [ ] Capture and publish 12 verified dashboard screenshots
