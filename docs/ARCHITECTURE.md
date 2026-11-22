@@ -1,7 +1,7 @@
 # Architecture
 
 ## System boundaries
-VerityGrid is a modular monolith with independently runnable API and web applications plus a separately runnable BullMQ validation worker.
+VerityGrid is a modular monolith with independently runnable API and web applications plus separately runnable BullMQ quality, freshness and notification workers.
 
 ```text
 React SPA (Vite)
@@ -47,7 +47,7 @@ Express API
 The repository includes authentication and tenant enforcement, data catalog and aggregate profiling, quality validation and lineage, background operations and governance, freshness/SLA evaluation, persisted-record analytics, evidence-rule recommendations and approval-gated classification changes. CSV exports neutralize spreadsheet formula prefixes and are bounded to recent rows. Operational foundations include request correlation, structured privacy-conscious logs, liveness/readiness probes, CI/CodeQL/Dependabot workflows and PostgreSQL backup/restore utilities. Live notification delivery still requires a real endpoint; live PostgreSQL source introspection and generative AI integration are not implemented. Runtime verification remains pending.
 
 ## Operations and governance (Phase 5)
-The API enqueues tenant-tagged quality jobs in Redis/BullMQ. A separate worker process executes the same supported aggregate-backed rule families, retries transient failures with exponential backoff, limits concurrency, and retains terminal failures in a dead-letter queue. API reads always filter job payloads by the authenticated workspace. Incidents carry lifecycle state and append-only event records; governance policies produce approval requests with a one-way decision transition. Audit events are created for key actions and exposed read-only to workspace administrators. Notification delivery is represented by a provider interface and remains disabled until a real provider and recipient policy are configured.
+The API enqueues tenant-tagged quality jobs in Redis/BullMQ. A separate worker process executes the same supported aggregate-backed rule families, retries transient failures with exponential backoff, limits concurrency, and retains terminal failures in a dead-letter queue. API reads always filter job payloads by the authenticated workspace. Incidents carry lifecycle state and append-only event records; governance policies produce approval requests with a one-way decision transition. Audit events are created for key actions and exposed read-only to workspace administrators. Incident delivery uses an optional HTTPS webhook provider with queued retries, idempotency keys and tenant-scoped delivery visibility; it remains disabled until an operator configures a trusted endpoint and token.
 
 ## Reliability and intelligence (Phase 6)
 Data imports record an observation timestamp; they do not store source rows. Tenant-scoped freshness policies compare that timestamp with a configured age target and calculate healthy, at-risk, breached or unknown states at read time. Analytics are aggregates over persisted quality runs, incidents and freshness policies. CSV exports are bounded and contain operational metadata, not imported row content.
