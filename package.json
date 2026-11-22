@@ -14,7 +14,8 @@
     "db:generate": "npm run db:generate -w @veritygrid/api",
     "db:migrate": "npm run db:migrate -w @veritygrid/api",
     "db:studio": "npm run db:studio -w @veritygrid/api",
-    "test": "npm run test -w @veritygrid/api"
+    "test": "npm run test -w @veritygrid/api",
+    "worker:dev": "npm run worker:dev -w @veritygrid/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -23,4 +24,4 @@
   "engines": {
     "node": ">=20.11"
   }
-}
+}\n
