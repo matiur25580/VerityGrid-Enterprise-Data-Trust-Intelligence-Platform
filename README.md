@@ -18,7 +18,7 @@ VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and
 - PostgreSQL + Prisma
 - Redis + BullMQ (background quality validation, retries and dead-letter retention)
 - Docker Compose for local dependencies
-- Vitest, Supertest and Playwright (planned test layers; not yet configured)
+- Vitest and Supertest for API coverage; Playwright planned for browser-level coverage
 
 ## Repository layout
 ```text
