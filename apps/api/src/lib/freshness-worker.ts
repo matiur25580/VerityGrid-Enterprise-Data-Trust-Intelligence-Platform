@@ -6,7 +6,6 @@ import { notificationProvider } from "./notifications";
 const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379", { maxRetriesPerRequest: null, enableReadyCheck: true });
 const queue = new Queue("veritygrid-freshness-sla", { connection, defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5000 }, removeOnComplete: { age: 86400, count: 200 }, removeOnFail: false } });
 const SYSTEM_ACTOR_ID = "00000000-0000-4000-8000-000000000001";
-const WARNING_PERCENT = 80;
 const PAGE_SIZE = 500;
 
 function evaluate(lastObservedAt: Date | null, targetMinutes: number, warnAtPercent: number, now: Date) {
@@ -66,7 +65,8 @@ export async function processFreshnessEvaluation(now = new Date()) {
 }
 
 export async function scheduleFreshnessEvaluation() {
-  const intervalMs = Math.max(60000, Number(process.env.FRESHNESS_SCHEDULE_INTERVAL_MS ?? 300000));
+  const configured = Number(process.env.FRESHNESS_SCHEDULE_INTERVAL_MS ?? 300000);
+  const intervalMs = Number.isFinite(configured) ? Math.max(60000, Math.floor(configured)) : 300000;
   await queue.upsertJobScheduler("freshness-sla-five-minute", { every: intervalMs }, { name: "evaluate-freshness-sla", data: {} });
 }
 export function startFreshnessWorker() {
