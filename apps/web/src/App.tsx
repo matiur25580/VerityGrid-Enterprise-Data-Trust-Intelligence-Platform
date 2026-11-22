@@ -1,8 +1,19 @@
-import { Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, CircleHelp, Database, GitBranch, LayoutDashboard, Search, ShieldCheck, Workflow } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  Activity, ArrowDownRight, ArrowUpRight, Bell, Boxes, CheckCircle2, CircleHelp,
+  Database, GitBranch, LayoutDashboard, LoaderCircle, LogOut, Search, ShieldCheck,
+  Workflow, Eye, EyeOff, Building2, ChevronDown,
+} from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+
+type Membership = {
+  role: string;
+  organization: { id: string; name: string; slug: string };
+};
+type User = { id: string; email: string; displayName: string; memberships: Membership[] };
+type AuthMode = "login" | "register";
 
 const navigation = [
-  { label: "Overview", icon: LayoutDashboard, active: true },
+  { label: "Overview", icon: LayoutDashboard },
   { label: "Data Catalog", icon: Database },
   { label: "Data Lineage", icon: GitBranch },
   { label: "Quality Center", icon: ShieldCheck },
@@ -10,18 +21,140 @@ const navigation = [
   { label: "Incidents", icon: Activity },
 ];
 
-function App() {\n  const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(new Date());
-  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
+async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...init.headers },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload?.error?.message ?? "Something went wrong. Please try again.";
+    throw new Error(message);
+  }
+  return payload as T;
+}
 
-  useEffect(() => {
-    fetch("/api/health")
-      .then((response) => {
-        if (!response.ok) throw new Error("API unavailable");
-        return response.json();
-      })
-      .then(() => setApiStatus("online"))
-      .catch(() => setApiStatus("offline"));
+function App() {
+  const today = new Intl.DateTimeFormat("en-US", {
+    weekday: "long", month: "long", day: "numeric", year: "numeric",
+  }).format(new Date());
+  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
+  const [user, setUser] = useState<User | null>(null);
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState("");
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
+  const [activePage, setActivePage] = useState("Overview");
+
+  const selectedMembership = useMemo(
+    () => user?.memberships.find((item) => item.organization.id === selectedOrganizationId) ?? user?.memberships[0],
+    [user, selectedOrganizationId],
+  );
+
+  const loadSession = useCallback(async () => {
+    try {
+      const health = await api<{ status: string }>("/api/health");
+      setApiStatus(health.status === "ok" ? "online" : "offline");
+    } catch {
+      setApiStatus("offline");
+    }
+
+    try {
+      const result = await api<{ data: { user: User | null } }>("/api/auth/me");
+      const nextUser = result.data.user;
+      if (nextUser) {
+        setUser(nextUser);
+        setSelectedOrganizationId((current) =>
+          nextUser.memberships.some((item) => item.organization.id === current)
+            ? current
+            : nextUser.memberships[0]?.organization.id ?? "",
+        );
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
   }, []);
+
+  useEffect(() => { void loadSession(); }, [loadSession]);
+
+  async function handleAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthError("");
+    setNotice("");
+    const form = new FormData(event.currentTarget);
+    const body: Record<string, string> = {
+      email: String(form.get("email") ?? "").trim(),
+      password: String(form.get("password") ?? ""),
+    };
+    if (authMode === "register") {
+      body.displayName = String(form.get("displayName") ?? "").trim();
+      body.organizationName = String(form.get("organizationName") ?? "").trim();
+    }
+
+    try {
+      await api(authMode === "register" ? "/api/auth/register" : "/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const result = await api<{ data: { user: User | null } }>("/api/auth/me");
+      if (!result.data.user) throw new Error("Your session could not be loaded. Please sign in again.");
+      setUser(result.data.user);
+      setSelectedOrganizationId(result.data.user.memberships[0]?.organization.id ?? "");
+      setNotice(authMode === "register" ? "Your workspace is ready. Welcome to VerityGrid." : "You are securely signed in.");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Authentication failed.");
+    }
+  }
+
+  async function handleLogout() {
+    setAuthError("");
+    try {
+      await api("/api/auth/logout", { method: "POST", body: "{}" });
+      setUser(null);
+      setSelectedOrganizationId("");
+      setNotice("You have been signed out.");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Unable to sign out.");
+    }
+  }
+
+  async function selectWorkspace(organizationId: string) {
+    setSelectedOrganizationId(organizationId);
+    setShowWorkspaceMenu(false);
+    try {
+      await api("/api/organizations/current", {
+        headers: { "x-organization-id": organizationId },
+      });
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Workspace access could not be verified.");
+    }
+  }
+
+  if (authLoading) {
+    return <div className="auth-loading"><div className="brand-mark"><Boxes size={22} /></div><LoaderCircle className="spin" size={19} /><span>Securing your workspace…</span></div>;
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        mode={authMode}
+        setMode={(mode) => { setAuthMode(mode); setAuthError(""); }}
+        onSubmit={handleAuth}
+        error={authError}
+        notice={notice}
+        apiStatus={apiStatus}
+      />
+    );
+  }
+
+  const activeWorkspace = selectedMembership?.organization;
 
   return (
     <div className="app-shell">
@@ -31,22 +164,52 @@ function App() {\n  const today = new Intl.DateTimeFormat("en-US", { weekday: "l
           <div><strong>veritygrid</strong><span>DATA TRUST PLATFORM</span></div>
         </div>
         <div className="workspace-label">WORKSPACE</div>
-        <button className="workspace-switch"><span className="workspace-avatar">N</span><span><b>Northstar Analytics</b><small>Enterprise workspace</small></span><span className="chevron">⌄</span></button>
+        <div className="workspace-menu-wrap">
+          <button className="workspace-switch" onClick={() => setShowWorkspaceMenu((value) => !value)}>
+            <span className="workspace-avatar">{activeWorkspace?.name.slice(0, 1).toUpperCase() ?? "W"}</span>
+            <span><b>{activeWorkspace?.name ?? "Select workspace"}</b><small>{selectedMembership?.role.replace("_", " ") ?? "No membership"}</small></span>
+            <ChevronDown className="chevron" size={15} />
+          </button>
+          {showWorkspaceMenu && (
+            <div className="workspace-dropdown">
+              {user.memberships.map((membership) => (
+                <button key={membership.organization.id} onClick={() => void selectWorkspace(membership.organization.id)}>
+                  <Building2 size={15} />
+                  <span><b>{membership.organization.name}</b><small>{membership.role.replace("_", " ")}</small></span>
+                  {membership.organization.id === activeWorkspace?.id && <CheckCircle2 size={15} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="nav-label">PLATFORM</div>
-        <nav>{navigation.map(({ label, icon: Icon, active }) => <a key={label} className={active ? "nav-item active" : "nav-item"} href="#"><Icon size={17} /><span>{label}</span>{label === "Incidents" && <i className="nav-count">3</i>}</a>)}</nav>
-        <div className="sidebar-bottom"><a className="nav-item" href="#"><CircleHelp size={17}/><span>Documentation</span></a><div className="user-card"><div className="user-avatar">MA</div><div><b>Workspace Admin</b><small>Platform administrator</small></div><span className="online-dot"/></div></div>
+        <nav>{navigation.map(({ label, icon: Icon }) => (
+          <button key={label} className={activePage === label ? "nav-item active" : "nav-item"} onClick={() => setActivePage(label)}>
+            <Icon size={17} /><span>{label}</span>
+          </button>
+        ))}</nav>
+        <div className="sidebar-bottom">
+          <a className="nav-item" href="https://github.com/matiur25580/VerityGrid-Enterprise-Data-Trust-Intelligence-Platform/blob/main/docs/API_AUTHENTICATION.md" target="_blank" rel="noreferrer"><CircleHelp size={17}/><span>Documentation</span></a>
+          <div className="user-card">
+            <div className="user-avatar">{user.displayName.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</div>
+            <div><b>{user.displayName}</b><small>{user.email}</small></div>
+            <button className="logout-button" onClick={() => void handleLogout()} aria-label="Sign out" title="Sign out"><LogOut size={15}/></button>
+          </div>
+        </div>
       </aside>
 
       <main className="main-area">
         <header className="topbar">
-          <div className="breadcrumbs">Workspace <span>/</span> <b>Overview</b></div>
-          <div className="top-actions"><div className="search-box"><Search size={15}/><span>Search anything...</span><kbd>⌘ K</kbd></div><button className="icon-button" aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">MA</div></div>
+          <div className="breadcrumbs">{activeWorkspace?.name ?? "Workspace"} <span>/</span> <b>{activePage}</b></div>
+          <div className="top-actions"><div className="search-box"><Search size={15}/><span>Search anything...</span><kbd>⌘ K</kbd></div><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><div className="top-avatar">{user.displayName.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</div></div>
         </header>
 
         <section className="content">
-          <div className="page-heading"><div><div className="eyebrow">{today.toUpperCase()}</div><h1>Data command center</h1><p>A live view of your organization's data trust and reliability.</p></div><button className="date-button">Last 30 days <span>⌄</span></button></div>
+          {notice && <div className="inline-notice"><CheckCircle2 size={16}/>{notice}<button onClick={() => setNotice("")}>Dismiss</button></div>}
+          {authError && <div className="inline-error">{authError}<button onClick={() => setAuthError("")}>Dismiss</button></div>}
+          <div className="page-heading"><div><div className="eyebrow">{today.toUpperCase()}</div><h1>{activePage === "Overview" ? "Data command center" : activePage}</h1><p>A live view of {activeWorkspace?.name ?? "your organization's"} data trust and reliability.</p></div><span className="role-pill">{selectedMembership?.role.replace("_", " ")}</span></div>
 
-          <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Connect a source to begin cataloging assets and measuring data quality.</p></div><span className="strip-status"><i/> Foundation preview</span></div>
+          <div className="welcome-strip"><div className="welcome-icon"><ShieldCheck size={21}/></div><div><b>Your data trust workspace</b><p>Your account is authenticated and your organization membership has been verified.</p></div><span className="strip-status"><i/> Secure session</span></div>
 
           <div className="section-heading"><div><h2>Platform health</h2><p>Operational indicators from your workspace</p></div><span className="updated">API {apiStatus === "online" ? "connected" : apiStatus === "offline" ? "unavailable" : "checking"} <i className={apiStatus}/></span></div>
 
@@ -58,15 +221,63 @@ function App() {\n  const today = new Intl.DateTimeFormat("en-US", { weekday: "l
           </div>
 
           <div className="dashboard-grid">
-            <section className="panel quality-panel"><div className="panel-heading"><div><h3>Data trust overview</h3><p>Quality dimensions will appear after your first validation run.</p></div><span className="panel-menu">···</span></div><div className="empty-chart"><div className="chart-ring"><div><ShieldCheck size={27}/><b>—</b><small>NO DATA</small></div></div><div className="empty-copy"><b>Build your first quality baseline</b><p>Register a dataset and define validation rules to generate evidence-backed trust scores.</p><button className="primary-button">Explore data catalog <span>→</span></button></div></div></section>
+            <section className="panel quality-panel"><div className="panel-heading"><div><h3>Data trust overview</h3><p>Quality dimensions will appear after your first validation run.</p></div><span className="panel-menu">···</span></div><div className="empty-chart"><div className="chart-ring"><div><ShieldCheck size={27}/><b>—</b><small>NO DATA</small></div></div><div className="empty-copy"><b>Build your first quality baseline</b><p>Register a dataset and define validation rules to generate evidence-backed trust scores.</p><button className="primary-button" onClick={() => setActivePage("Data Catalog")}>Explore data catalog <span>→</span></button></div></div></section>
             <section className="panel activity-panel"><div className="panel-heading"><div><h3>Recent activity</h3><p>Latest events across your workspace</p></div><button className="text-button">View all</button></div><div className="activity-empty"><div className="activity-empty-icon"><Activity size={22}/></div><b>No activity recorded</b><p>Ingestion runs, quality checks and governance events will be listed here.</p></div></section>
           </div>
 
           <section className="panel onboarding-panel"><div><div className="eyebrow">GETTING STARTED</div><h3>Bring your first dataset into focus</h3><p>Follow the initial setup path to establish a measurable data reliability baseline.</p></div><div className="setup-steps"><div className="setup-step"><span>01</span><div><b>Register a data source</b><small>Connect PostgreSQL or import a CSV file.</small></div><ArrowUpRight size={16}/></div><div className="setup-step"><span>02</span><div><b>Catalog your first asset</b><small>Document ownership, schema and purpose.</small></div><ArrowUpRight size={16}/></div><div className="setup-step"><span>03</span><div><b>Run quality checks</b><small>Validate completeness, uniqueness and freshness.</small></div><ArrowUpRight size={16}/></div></div></section>
-          <footer>VERITYGRID <span>·</span> Enterprise Data Trust Platform <span className="footer-right">Built for trustworthy data operations</span></footer>
+          <footer>VERITYGRID <span>·</span> Enterprise Data Trust Platform <span className="footer-right">Signed in as {user.email}</span></footer>
         </section>
       </main>
     </div>
+  );
+}
+
+function AuthScreen({
+  mode, setMode, onSubmit, error, notice, apiStatus,
+}: {
+  mode: AuthMode;
+  setMode: (mode: AuthMode) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  error: string;
+  notice: string;
+  apiStatus: "checking" | "online" | "offline";
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+  const registering = mode === "register";
+  return (
+    <main className="auth-page">
+      <div className="auth-decoration auth-decoration-one"/><div className="auth-decoration auth-decoration-two"/>
+      <section className="auth-card">
+        <div className="auth-brand"><div className="brand-mark"><Boxes size={22}/></div><div><strong>veritygrid</strong><span>DATA TRUST PLATFORM</span></div></div>
+        <div className="auth-eyebrow">{registering ? "CREATE YOUR WORKSPACE" : "ENTERPRISE DATA INTELLIGENCE"}</div>
+        <h1>{registering ? "Start with trusted data." : "Welcome back."}</h1>
+        <p className="auth-subtitle">{registering ? "Create your organization and invite your data operations journey to begin." : "Sign in to your organization's data trust command center."}</p>
+
+        <div className="auth-tabs"><button className={!registering ? "selected" : ""} onClick={() => setMode("login")} type="button">Sign in</button><button className={registering ? "selected" : ""} onClick={() => setMode("register")} type="button">Create workspace</button></div>
+
+        {notice && <div className="auth-success"><CheckCircle2 size={16}/>{notice}</div>}
+        {error && <div className="auth-error" role="alert">{error}</div>}
+
+        <form className="auth-form" onSubmit={onSubmit}>
+          {registering && <>
+            <label htmlFor="displayName">Your full name</label>
+            <input id="displayName" name="displayName" type="text" placeholder="e.g. Alex Morgan" autoComplete="name" minLength={2} maxLength={120} required/>
+            <label htmlFor="organizationName">Organization name</label>
+            <input id="organizationName" name="organizationName" type="text" placeholder="e.g. Northstar Analytics" minLength={2} maxLength={160} required/>
+          </>}
+          <label htmlFor="email">Work email</label>
+          <input id="email" name="email" type="email" placeholder="you@company.com" autoComplete="email" maxLength={254} required/>
+          <div className="password-label"><label htmlFor="password">Password</label>{registering && <span>At least 12 characters</span>}</div>
+          <div className="password-input"><input id="password" name="password" type={showPassword ? "text" : "password"} placeholder={registering ? "Create a strong password" : "Enter your password"} autoComplete={registering ? "new-password" : "current-password"} minLength={registering ? 12 : 1} maxLength={72} required/><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div>
+          <button className="auth-submit" type="submit">{registering ? "Create secure workspace" : "Sign in securely"} <ArrowUpRight size={17}/></button>
+        </form>
+
+        <div className="auth-footer"><span><ShieldCheck size={14}/> Protected with secure sessions</span><span className="api-indicator"><i className={apiStatus}/> API {apiStatus}</span></div>
+        <p className="auth-legal">By continuing, you agree to use VerityGrid in accordance with your organization's security policies.</p>
+      </section>
+      <div className="auth-side-note"><span>01 / TRUST</span><b>Reliable data starts with a clear view of what you can trust.</b><p>Catalog. Validate. Govern. Operate with confidence.</p></div>
+    </main>
   );
 }
 
