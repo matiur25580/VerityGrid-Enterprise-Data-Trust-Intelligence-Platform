@@ -33,11 +33,11 @@
 - [ ] Object-storage-backed large-file ingestion
 
 ## Phase 4 — Quality and lineage
-- [ ] Versioned validation rules
-- [ ] Deterministic rule execution engine
-- [ ] Persisted quality results and score calculation
-- [ ] Dataset dependency graph
-- [ ] Impact analysis
+- [x] Versioned validation rules with immutable history and active-version switching
+- [x] Deterministic rule execution engine (row count, column existence, null rate and uniqueness from import aggregates)
+- [x] Persisted quality results, execution history and pass-rate score
+- [x] Tenant-scoped dataset dependency graph with cycle prevention
+- [x] Downstream impact analysis with bounded traversal
 
 ## Phase 5 — Operations and governance
 - [ ] Background ingestion and validation workers
