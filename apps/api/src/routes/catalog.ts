@@ -234,6 +234,7 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         classification: input.classification,
         assetType: "DATASET",
         rowCount: records.length,
+        lastObservedAt: new Date(),
         schema: columns as Prisma.InputJsonValue,
         metadata: { importFormat: input.format, columnStats } as Prisma.InputJsonValue,
       },
