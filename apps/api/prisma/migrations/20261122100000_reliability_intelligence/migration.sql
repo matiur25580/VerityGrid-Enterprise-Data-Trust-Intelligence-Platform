@@ -16,3 +16,4 @@ ALTER TABLE "FreshnessPolicy" ADD CONSTRAINT "FreshnessPolicy_assetId_fkey" FORE
 ALTER TABLE "GovernanceApproval" ADD COLUMN "actionType" VARCHAR(60);
 ALTER TABLE "GovernanceApproval" ADD COLUMN "actionPayload" JSONB;
 ALTER TABLE "GovernanceApproval" ADD COLUMN "executedAt" TIMESTAMP(3);
+ALTER TABLE "FreshnessPolicy" ADD CONSTRAINT "FreshnessPolicy_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
