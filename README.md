@@ -227,7 +227,7 @@ Never commit real environment files or credentials. Replace local-only Compose c
 ## 7. Engineering quality and CI
 
 The repository includes:
-- **CI workflow:** tests Node.js 22, 24 and 26, installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration and frontend regression tests with PostgreSQL and Redis services.
+- **CI workflow:** tests Node.js 22, 24 and 26, uses a committed npm lockfile with `npm ci`, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration and frontend regression tests with PostgreSQL and Redis services.
 - **CodeQL:** scheduled and change-triggered JavaScript/TypeScript security analysis using extended queries.
 - **Dependabot:** weekly npm and GitHub Actions dependency update pull requests.
 - **Pull-request template:** prompts reviewers to consider tenant isolation, data handling, migrations, job idempotency, observability and rollback.
@@ -333,6 +333,7 @@ The following are intentionally explicit so that product claims remain evidence-
 - [Security Baseline](docs/SECURITY.md)
 - [Production Readiness and Operations](docs/PRODUCTION_READINESS.md)
 - [Frontend Resilience](docs/FRONTEND_RESILIENCE.md)
+- [Reproducible Dependency Installation](docs/DEPENDENCY_LOCKFILE.md)
 - [Authentication API](docs/API_AUTHENTICATION.md)
 - [Data Catalog API](docs/DATA_CATALOG.md)
 - [Quality and Lineage API](docs/QUALITY_LINEAGE.md)
