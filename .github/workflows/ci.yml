@@ -15,9 +15,13 @@ concurrency:
 
 jobs:
   quality:
-    name: Typecheck, build and integration tests
+    name: Typecheck, build and integration tests (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24, 26]
     services:
       postgres:
         image: postgres:16-alpine
@@ -52,7 +56,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Audit dependencies
