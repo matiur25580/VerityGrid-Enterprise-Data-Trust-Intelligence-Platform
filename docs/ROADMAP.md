@@ -33,7 +33,7 @@
 - [ ] Object-storage-backed large-file ingestion
 
 ## Phase 4 — Quality and lineage
-- [x] Versioned validation rules with immutable history and active-version switching
+- [x] Versioned validation rules with retained history and active-version switching
 - [x] Deterministic rule execution engine (row count, column existence, null rate and uniqueness from import aggregates)
 - [x] Persisted quality results, execution history and pass-rate score
 - [x] Tenant-scoped dataset dependency graph with cycle prevention
