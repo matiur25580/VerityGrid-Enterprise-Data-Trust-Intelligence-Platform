@@ -11,6 +11,7 @@ This document distinguishes controls implemented in the current Phase 2 API from
 - Tenant access is resolved by matching the authenticated user ID with an organization membership. A client-supplied organization ID is never trusted without that membership check.
 - Organization roles are checked by API middleware for privileged routes.
 - Registration and login are rate-limited; request bodies are size-limited; Helmet and an explicit CORS origin are configured.
+- Login performs a bcrypt comparison against a cached dummy hash when an account does not exist, reducing account-enumeration signals from the missing-user password path.
 - Each request receives a server-generated correlation ID and structured completion log that omits query strings, bodies, credentials, cookies and IP addresses.
 - Liveness and PostgreSQL readiness probes are exposed separately; readiness returns 503 when PostgreSQL is unavailable.
 - GitHub Actions CI, CodeQL security analysis, Dependabot updates and a coordinated vulnerability reporting policy are configured.
