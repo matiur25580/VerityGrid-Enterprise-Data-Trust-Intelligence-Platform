@@ -119,7 +119,7 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId)
       .send({ name: "Finance Warehouse", sourceType: "POSTGRESQL" })
       .expect(201);
-    await client.post("/api/catalog/sources")
+    const otherSource = await client.post("/api/catalog/sources")
       .set("x-organization-id", organizationId)
       .send({ name: "Operations Archive", sourceType: "JSON" })
       .expect(201);
@@ -131,7 +131,7 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId).expect(200);
     expect(secondSourcePage.body.data.sources).toHaveLength(1);
     expect(secondSourcePage.body.data.pagination.hasMore).toBe(false);
-    await client.get(`/api/catalog/sources?sourceType=CSV&cursor=${firstSourcePage.body.data.pagination.nextCursor}`)
+    await client.get(`/api/catalog/sources?sourceType=CSV&cursor=${otherSource.body.data.source.id}`)
       .set("x-organization-id", organizationId).expect(400);
     await client.get(`/api/catalog/sources/${randomUUID()}`)
       .set("x-organization-id", organizationId).expect(404);
