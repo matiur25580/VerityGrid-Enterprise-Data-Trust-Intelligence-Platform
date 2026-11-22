@@ -44,7 +44,7 @@ export async function processFreshnessEvaluation(now = new Date()) {
       const transition = await prisma.$transaction(async tx => {
         const existing = await tx.incident.findUnique({ where: { organizationId_sourceKey: { organizationId: policy.organizationId, sourceKey } } });
         if (state === "UNKNOWN") return { changed: false, incidentId: null as string | null, created: false, reopened: false };
-        if (!existing && nextStatus === "RESOLVED") return { changed: false, incidentId: null as string | null, created: false };
+        if (!existing && nextStatus === "RESOLVED") return { changed: false, incidentId: null as string | null, created: false, reopened: false };
         if (!existing) {
           const incident = await tx.incident.create({ data: { organizationId: policy.organizationId, sourceKey, title: state === "BREACHED" ? "Dataset freshness SLA breached" : "Dataset freshness at risk", description: policy.asset.name + " has not been observed within its configured freshness objective.", severity, status: "OPEN", assetId: policy.assetId, createdBy: SYSTEM_ACTOR_ID } });
           await tx.incidentEvent.create({ data: { organizationId: policy.organizationId, incidentId: incident.id, actorId: SYSTEM_ACTOR_ID, eventType: "FRESHNESS_SLA_BREACHED", detail: "Scheduled freshness evaluation opened a " + state.toLowerCase() + " incident." } });
