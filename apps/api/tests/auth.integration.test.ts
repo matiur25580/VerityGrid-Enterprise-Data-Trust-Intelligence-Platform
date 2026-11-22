@@ -14,6 +14,9 @@ describe("identity and tenant security", () => {
   });
 
   afterAll(async () => {
+    if (organizationId) {
+      await prisma.organization.deleteMany({ where: { id: organizationId } });
+    }
     await prisma.user.deleteMany({ where: { email } });
     await prisma.$disconnect();
   });
