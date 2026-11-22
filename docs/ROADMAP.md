@@ -40,11 +40,13 @@
 - [x] Downstream impact analysis with bounded traversal
 
 ## Phase 5 — Operations and governance
-- [ ] Background ingestion and validation workers
-- [ ] Retry, idempotency and dead-letter handling
-- [ ] Incident lifecycle and notifications
-- [ ] Governance policies and approvals
-- [ ] Append-only audit events
+- [x] Redis/BullMQ background quality validation worker with bounded concurrency
+- [x] Exponential retry, organization-scoped idempotency and dead-letter retention
+- [x] Tenant-scoped incident lifecycle, assignment API and event history
+- [x] Governance policies and approval request/decision workflow
+- [x] Append-only audit event API and notification provider abstraction (delivery disabled until configured)
+- [x] Operations Center UI for incidents, approvals, queue activity and dead letters
+- [ ] Full API integration suite, generated Prisma client, migration and build verification
 
 ## Phase 6 — Reliability and intelligence
 - [ ] Freshness and SLA monitoring
