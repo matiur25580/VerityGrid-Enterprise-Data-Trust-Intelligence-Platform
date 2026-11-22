@@ -1,0 +1,56 @@
+name: Generate reproducible npm lockfile
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: npm-lockfile-refresh
+  cancel-in-progress: false
+
+jobs:
+  lockfile:
+    name: Resolve and verify workspace lockfile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Generate npm workspace lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify clean reproducible installation
+        run: npm ci --no-audit --no-fund
+      - name: Generate Prisma Client
+        run: npm run db:generate
+      - name: Require lockfile and switch CI to npm ci
+        shell: bash
+        run: |
+          test -s package-lock.json
+          grep -q 'npm install --no-audit --no-fund' .github/workflows/ci.yml
+          sed -i 's/npm install --no-audit --no-fund/npm ci --no-audit --no-fund/' .github/workflows/ci.yml
+      - name: Open lockfile pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/reproducible-npm-lockfile
+          delete-branch: true
+          commit-message: 'build: add reproducible npm workspace lockfile'
+          title: 'build: add reproducible npm workspace lockfile'
+          body: |
+            ## Summary
+            - Generate the npm workspace lockfile from the committed manifests using Node.js 22.
+            - Verify a clean `npm ci` installation and Prisma Client generation.
+            - Switch CI dependency installation from `npm install` to `npm ci`.
+
+            Please review the lockfile diff and allow the normal CI and dependency-review workflows to complete before merging.
+          labels: |
+            dependencies
+            build
