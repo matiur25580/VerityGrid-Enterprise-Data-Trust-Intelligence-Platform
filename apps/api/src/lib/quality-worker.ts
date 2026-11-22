@@ -1,4 +1,4 @@
-import { Worker, Queue, QueueEvents, JobsOptions } from "bullmq";
+import { Worker, Queue, JobsOptions } from "bullmq";
 import IORedis from "ioredis";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -6,7 +6,6 @@ import { notificationProvider } from "./notifications";
 
 const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379", { maxRetriesPerRequest: null, enableReadyCheck: true });
 export const qualityQueue = new Queue("veritygrid-quality", { connection, defaultJobOptions: { attempts: 4, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: { age: 86400, count: 1000 }, removeOnFail: false } });
-export const qualityQueueEvents = new QueueEvents("veritygrid-quality", { connection });
 export const deadLetterQueue = new Queue("veritygrid-quality-dead-letter", { connection, defaultJobOptions: { removeOnComplete: false, removeOnFail: false } });
 
 type ValidationJob = { organizationId: string; assetId: string; requestedBy: string; requestKey: string };
@@ -49,3 +48,5 @@ export function startQualityWorker() {
 export async function enqueueQualityJob(data: ValidationJob, options: JobsOptions = {}) {
   return qualityQueue.add("validate-asset", data, { jobId: data.requestKey.replace(/:/g, "_"), ...options });
 }
+
+export async function closeQualityQueues() { await Promise.all([qualityQueue.close(), deadLetterQueue.close()]); await connection.quit(); }
