@@ -69,7 +69,7 @@ describe("identity and tenant security", () => {
       .send({
         name: "orders",
         format: "CSV",
-        content: "order_id,total\\n1001,42.50\\n1002,18.00",
+        content: "order_id,total\n1001,42.50\n1002,18.00",
         classification: "CONFIDENTIAL",
       })
       .expect(201);
@@ -110,6 +110,14 @@ describe("identity and tenant security", () => {
       .set("x-organization-id", organizationId)
       .expect(200);
     expect(impact.body.data.impactCount).toBe(1);
+    const cycle = await client.post("/api/quality/lineage")
+      .set("x-organization-id", organizationId)
+      .send({ upstreamAssetId: downstreamId, downstreamAssetId: assetId })
+      .expect(409);
+    expect(cycle.body.error.code).toBe("LINEAGE_CYCLE");
+    await client.get(`/api/quality/assets/${assetId}/rules`)
+      .set("x-organization-id", randomUUID())
+      .expect(403);
     await client.post("/api/quality/lineage")
       .set("x-organization-id", organizationId)
       .send({ upstreamAssetId: downstreamId, downstreamAssetId: assetId })
