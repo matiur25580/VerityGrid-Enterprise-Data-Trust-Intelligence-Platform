@@ -44,7 +44,7 @@
 - [x] Exponential retry, organization-scoped idempotency and dead-letter retention
 - [x] Tenant-scoped incident lifecycle, assignment API and event history
 - [x] Governance policies and approval request/decision workflow
-- [x] Append-only audit event API and notification provider abstraction (delivery disabled until configured)
+- [x] Append-only audit event API and configurable HTTPS webhook notification delivery foundation
 - [x] Operations Center UI for incidents, approvals, queue activity and dead letters
 - [x] Freshness, analytics, export, evidence-insight and approval-gated action integration scenarios authored
 - [x] CSV spreadsheet-formula injection mitigation and regression coverage
@@ -70,5 +70,6 @@
 - [ ] Threat model and security review
 - [ ] Load and failure-mode testing
 - [ ] Backup and restore verification
-- [ ] CI quality gates and dependency scanning
+- [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, typecheck and builds (execution pending)
+- [x] CodeQL security analysis and Dependabot dependency update automation
 - [ ] Deployment runbooks and environment documentation
