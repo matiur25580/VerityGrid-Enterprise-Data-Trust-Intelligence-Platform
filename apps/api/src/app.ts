@@ -5,6 +5,7 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { originGuard } from "./middleware/origin-guard";
 import { errorHandler } from "./middleware/error-handler";
+import { requestContext } from "./middleware/request-context";
 import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
 import { organizationsRouter } from "./routes/organizations";
@@ -16,6 +17,7 @@ import { reliabilityRouter } from "./routes/reliability";
 const app = express();
 
 app.disable("x-powered-by");
+app.use(requestContext);
 app.use(helmet());
 app.use(
   cors({
