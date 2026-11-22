@@ -2,6 +2,10 @@
 
 The root README publishes a **single-column gallery**: one genuine dashboard screenshot per row, followed by its descriptive caption. Capture at a consistent 1440 × 1000 viewport with browser chrome hidden. The Playwright script saves full-page PNGs in this directory.
 
+## Run from GitHub Actions
+
+After deploying a synthetic demo workspace, add repository Actions secrets `DEMO_EMAIL` and `DEMO_PASSWORD`. Open **Actions → Capture dashboard showcase → Run workflow** and provide the deployed base URL. The workflow installs the locked project dependencies, adds Playwright without changing the lockfile, installs Chromium, captures the twelve real screens, validates every expected PNG, and commits the images to `main`. Never use production credentials or customer data.
+
 ## Capture command
 
 Install Playwright locally without changing the committed workspace manifests, install Chromium, and run the capture script against a running app:
