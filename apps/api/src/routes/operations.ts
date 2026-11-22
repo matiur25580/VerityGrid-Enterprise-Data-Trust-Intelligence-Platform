@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
 import { enqueueQualityJob, qualityQueue, deadLetterQueue } from "../lib/quality-worker";
-import { notificationProvider } from "../lib/notifications";
+import { enqueueIncidentNotification, notificationQueue } from "../lib/notifications";
 
 export const operationsRouter=Router();
 operationsRouter.use(authenticate,requireTenant);
@@ -37,6 +37,29 @@ operationsRouter.get("/jobs",async(req,res,next)=>{try{
  res.json({data:{jobs,counts:{waiting:waiting.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,active:active.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,failed:failed.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,completed:completed.filter(j=>j.data.organizationId===req.tenant!.organizationId).length}}});
 }catch(e){next(e);}});
 
+
+operationsRouter.get("/notification-deliveries",async(req,res,next)=>{try{
+ const org=req.tenant!.organizationId;
+ const [waiting,active,delayed,failed,completed]=await Promise.all([
+  notificationQueue.getJobs(["waiting"],0,99),notificationQueue.getJobs(["active"],0,99),
+  notificationQueue.getJobs(["delayed"],0,99),notificationQueue.getJobs(["failed"],0,99),
+  notificationQueue.getJobs(["completed"],0,49)
+ ]);
+ const own=(jobs:any[])=>jobs.filter(job=>job.data.organizationId===org);
+ const jobs=[...own(waiting),...own(active),...own(delayed),...own(failed),...own(completed)]
+  .sort((a,b)=>b.timestamp-a.timestamp).slice(0,100)
+  .map(job=>({id:job.id,incidentId:job.data.incidentId,severity:job.data.severity,eventKey:job.data.eventKey,state:job.failedReason?"failed":job.finishedOn?"delivered":job.processedOn?"sending":job.delay?"delayed":"queued",attemptsMade:job.attemptsMade,createdAt:new Date(job.timestamp).toISOString(),deliveredAt:job.finishedOn?new Date(job.finishedOn).toISOString():null,errorCode:job.failedReason?String(job.failedReason).slice(0,80):null}));
+ res.json({data:{configured:Boolean(process.env.INCIDENT_WEBHOOK_URL?.trim()),provider:process.env.INCIDENT_WEBHOOK_URL?.trim()?"https-webhook":"disabled",counts:{queued:own([...waiting,...delayed]).length,active:own(active).length,failed:own(failed).length,delivered:own(completed).length},jobs}});
+}catch(e){next(e);}});
+operationsRouter.post("/notification-deliveries/:jobId/retry",admin,async(req,res,next)=>{try{
+ const job=await notificationQueue.getJob(req.params.jobId);
+ if(!job||job.data.organizationId!==req.tenant!.organizationId){res.status(404).json({error:{code:"NOTIFICATION_NOT_FOUND",message:"Notification delivery not found in this workspace."}});return;}
+ if(await job.getState()!=="failed"){res.status(409).json({error:{code:"NOTIFICATION_NOT_FAILED",message:"Only failed notification deliveries can be retried."}});return;}
+ await job.retry();
+ await audit(req.tenant!.organizationId,req.auth!.userId,"NOTIFICATION_RETRY_REQUESTED","Notification",String(job.id),{incidentId:job.data.incidentId});
+ res.status(202).json({data:{jobId:job.id,state:"queued"}});
+}catch(e){next(e);}});
+
 operationsRouter.get("/dead-letters",async(req,res,next)=>{try{const jobs=await deadLetterQueue.getJobs(["waiting","failed"],0,99);const items=jobs.filter(j=>j.data.organizationId===req.tenant!.organizationId).map(j=>({id:j.id,assetId:j.data.assetId,failedAt:j.data.failedAt,errorCode:j.data.errorCode}));res.json({data:{deadLetters:items}});}catch(e){next(e);}});
 operationsRouter.get("/incidents",async(req,res,next)=>{try{const incidents=await prisma.incident.findMany({where:{organizationId:req.tenant!.organizationId},orderBy:{createdAt:"desc"},take:100,include:{events:{orderBy:{createdAt:"asc"}}}});res.json({data:{incidents}});}catch(e){next(e);}});
 operationsRouter.post("/incidents",writer,async(req,res,next)=>{try{
@@ -46,7 +69,7 @@ operationsRouter.post("/incidents",writer,async(req,res,next)=>{try{
  if(body.data.assigneeId&&!await prisma.membership.findFirst({where:{organizationId:req.tenant!.organizationId,userId:body.data.assigneeId}})){res.status(400).json({error:{code:"INVALID_ASSIGNEE",message:"Assignee must be a workspace member."}});return;}
  const incident=await prisma.incident.create({data:{...body.data,organizationId:req.tenant!.organizationId,status:"OPEN",createdBy:req.auth!.userId,sourceKey:"manual:"+randomUUID()}});
  await prisma.incidentEvent.create({data:{organizationId:req.tenant!.organizationId,incidentId:incident.id,actorId:req.auth!.userId,eventType:"CREATED",detail:"Incident created."}});
- await notificationProvider.incidentCreated({organizationId:req.tenant!.organizationId,incidentId:incident.id,severity:incident.severity});
+ await enqueueIncidentNotification({organizationId:req.tenant!.organizationId,incidentId:incident.id,severity:incident.severity,eventKey:"manual-created"});
  await audit(req.tenant!.organizationId,req.auth!.userId,"INCIDENT_CREATED","Incident",incident.id,{severity:incident.severity});
  res.status(201).json({data:{incident}});
 }catch(e){next(e);}});
