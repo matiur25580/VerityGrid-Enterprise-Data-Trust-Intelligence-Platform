@@ -66,7 +66,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 | Jobs | Redis 7, BullMQ, ioredis | Background execution, retries and scheduling |
 | Validation | Zod | Request and payload validation |
 | Security | bcryptjs, Helmet, CORS, express-rate-limit | Identity and API security controls |
-| Testing | Vitest, Supertest | API and integration coverage |
+| Testing | Vitest, Supertest | API integration and frontend component regression coverage |
 | Engineering automation | GitHub Actions, CodeQL, Dependabot | Quality gates and dependency/security review |
 | Local infrastructure | Docker Compose | PostgreSQL and Redis development services |
 
@@ -227,7 +227,7 @@ Never commit real environment files or credentials. Replace local-only Compose c
 ## 7. Engineering quality and CI
 
 The repository includes:
-- **CI workflow:** tests Node.js 22, 24 and 26, installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration tests with PostgreSQL and Redis services.
+- **CI workflow:** tests Node.js 22, 24 and 26, installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration and frontend regression tests with PostgreSQL and Redis services.
 - **CodeQL:** scheduled and change-triggered JavaScript/TypeScript security analysis using extended queries.
 - **Dependabot:** weekly npm and GitHub Actions dependency update pull requests.
 - **Pull-request template:** prompts reviewers to consider tenant isolation, data handling, migrations, job idempotency, observability and rollback.
