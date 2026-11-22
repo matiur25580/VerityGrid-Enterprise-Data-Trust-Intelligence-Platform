@@ -16,7 +16,7 @@ VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and
 - React + TypeScript + Vite
 - Node.js + Express + TypeScript
 - PostgreSQL + Prisma
-- Redis + BullMQ (background quality validation, retries and dead-letter retention)
+- Redis + BullMQ (background quality validation, freshness SLA monitoring, retryable incident notifications and dead-letter retention)
 - Docker Compose for local dependencies
 - Vitest and Supertest for API coverage; Playwright planned for browser-level coverage
 
@@ -48,7 +48,7 @@ Prerequisites: Node.js 20+, npm 10+, Docker Engine/Desktop.
    `npm run dev`
 7. Start the background validation worker in a second terminal:
    `npm run worker:dev`
-8. Run API integration tests (requires the migrated local database):
+9. Run API integration tests (requires the migrated local database):
    `npm test`
 
 The API defaults to `http://localhost:4000`; the web application defaults to `http://localhost:5173`.
