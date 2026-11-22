@@ -18,7 +18,8 @@
 - [x] Membership and role authorization middleware
 - [x] Membership-verified tenant context
 - [ ] Tenant-scoped repositories for all future tenant-owned resources
-- [ ] Security and integration tests
+- [x] Add API integration coverage for registration, login, session rotation/revocation and tenant authorization (authored; execution pending)
+- [ ] Run security and integration tests against a migrated local database
 - [ ] Email verification and account recovery
 
 ## Phase 3 — Data catalog
