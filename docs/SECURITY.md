@@ -3,7 +3,7 @@
 This document distinguishes controls implemented in the current Phase 2 API from controls still required before production use. It is not a certification or a claim that the product is production-ready.
 
 ## Implemented in Phase 2
-- Passwords are hashed with bcryptjs (work factor 12); plaintext passwords are never persisted.
+- Passwords are hashed with bcryptjs (work factor 12); input is capped at 72 UTF-8 bytes to respect bcrypt's input limit; plaintext passwords are never persisted.
 - Authentication uses cryptographically random opaque session tokens. Only SHA-256 token hashes are stored in PostgreSQL.
 - Session cookies are HttpOnly, SameSite=Strict, path-scoped and Secure in production.
 - Sessions expire after seven days, can be revoked on logout, and can be atomically rotated through the session-rotation endpoint.
