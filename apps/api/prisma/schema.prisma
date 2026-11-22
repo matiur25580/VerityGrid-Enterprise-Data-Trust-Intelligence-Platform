@@ -182,10 +182,28 @@ model LineageEdge {
   @@index([organizationId, downstreamAssetId])
 }
 
-enum IncidentSeverity {\n  LOW\n  MEDIUM\n  HIGH\n  CRITICAL\n}
-enum IncidentStatus {\n  OPEN\n  ACKNOWLEDGED\n  RESOLVED\n  CLOSED\n}
-enum PolicyType {\n  CLASSIFICATION_CHANGE\n  DATA_ACCESS\n  RETENTION\n}
-enum ApprovalDecision {\n  PENDING\n  APPROVED\n  REJECTED\n}
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  CLOSED
+}
+enum PolicyType {
+  CLASSIFICATION_CHANGE
+  DATA_ACCESS
+  RETENTION
+}
+enum ApprovalDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
 model Incident {
   id String @id @default(uuid()) @db.Uuid
