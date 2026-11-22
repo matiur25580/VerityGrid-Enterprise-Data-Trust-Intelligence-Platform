@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
@@ -40,7 +41,7 @@ operationsRouter.post("/incidents",writer,async(req,res,next)=>{try{
  if(!body.success){res.status(400).json({error:{code:"VALIDATION_ERROR",message:"Provide a title and valid severity."}});return;}
  if(body.data.assetId&&!await prisma.dataAsset.findFirst({where:{id:body.data.assetId,organizationId:req.tenant!.organizationId}})){res.status(404).json({error:{code:"ASSET_NOT_FOUND",message:"Dataset not found."}});return;}
  if(body.data.assigneeId&&!await prisma.membership.findFirst({where:{organizationId:req.tenant!.organizationId,userId:body.data.assigneeId}})){res.status(400).json({error:{code:"INVALID_ASSIGNEE",message:"Assignee must be a workspace member."}});return;}
- const incident=await prisma.incident.create({data:{...body.data,organizationId:req.tenant!.organizationId,status:"OPEN",createdBy:req.auth!.userId,sourceKey:"manual:"+crypto.randomUUID()}});
+ const incident=await prisma.incident.create({data:{...body.data,organizationId:req.tenant!.organizationId,status:"OPEN",createdBy:req.auth!.userId,sourceKey:"manual:"+randomUUID()}});
  await prisma.incidentEvent.create({data:{organizationId:req.tenant!.organizationId,incidentId:incident.id,actorId:req.auth!.userId,eventType:"CREATED",detail:"Incident created."}});
  await audit(req.tenant!.organizationId,req.auth!.userId,"INCIDENT_CREATED","Incident",incident.id,{severity:incident.severity});
  res.status(201).json({data:{incident}});
