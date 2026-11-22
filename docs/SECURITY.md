@@ -11,14 +11,18 @@ This document distinguishes controls implemented in the current Phase 2 API from
 - Tenant access is resolved by matching the authenticated user ID with an organization membership. A client-supplied organization ID is never trusted without that membership check.
 - Organization roles are checked by API middleware for privileged routes.
 - Registration and login are rate-limited; request bodies are size-limited; Helmet and an explicit CORS origin are configured.
+- Each request receives a server-generated correlation ID and structured completion log that omits query strings, bodies, credentials, cookies and IP addresses.
+- Liveness and PostgreSQL readiness probes are exposed separately; readiness returns 503 when PostgreSQL is unavailable.
+- GitHub Actions CI, CodeQL security analysis, Dependabot updates and a coordinated vulnerability reporting policy are configured.
 - Mutating requests with an Origin header are checked against the configured web origin.
 
 ## Required before production
-- Add automated security, API integration and browser tests, including cross-tenant denial cases.
+- Execute automated security, API integration and browser tests, including cross-tenant denial cases, against a migrated test database.
 - Add email verification, password reset, account recovery and administrative session revocation.
 - Add append-only audit events for authentication and privileged actions.
-- Configure HTTPS, trusted proxy behavior and a deployment-specific web/API origin strategy.
+- Configure HTTPS, trusted proxy behavior and a deployment-specific web/API origin strategy; the current app does not configure proxy trust automatically.
 - Add scheduled cleanup of expired session records and monitoring for authentication anomalies.
+- Configure managed log retention, alerting, distributed tracing and worker/queue monitoring for each deployment.
 - Review password policy and consider Argon2id with an operationally maintained implementation.
 - Add a documented CSRF strategy for the final deployment topology. SameSite cookies and origin validation are defense-in-depth, not a substitute for a complete threat review.
 - Add centralized tenant-scoped repositories for every tenant-owned resource before those resource APIs are introduced.
