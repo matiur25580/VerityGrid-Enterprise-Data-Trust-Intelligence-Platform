@@ -73,12 +73,8 @@ jobs:
         run: npm run build
       - name: Run API and frontend tests
         run: npm test
-      - name: Require lockfile and switch CI to npm ci
-        shell: bash
-        run: |
-          test -s package-lock.json
-          grep -q 'npm install --no-audit --no-fund' .github/workflows/ci.yml
-          sed -i 's/npm install --no-audit --no-fund/npm ci --no-audit --no-fund/' .github/workflows/ci.yml
+      - name: Require generated lockfile
+        run: test -s package-lock.json
       - name: Open lockfile pull request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -91,6 +87,6 @@ jobs:
             - Generate the npm workspace lockfile from the committed manifests using Node.js 22.
             - Verify a clean `npm ci` installation.
             - Run dependency audit, Prisma generation and migrations, typecheck, build, and API/frontend tests.
-            - Switch CI dependency installation from `npm install` to `npm ci`.
+            - Provide the verified lockfile for review; CI will switch to `npm ci` in a separate reviewed workflow-file change.
 
             Please review the lockfile diff and allow the normal CI and dependency-review workflows to complete before merging.
