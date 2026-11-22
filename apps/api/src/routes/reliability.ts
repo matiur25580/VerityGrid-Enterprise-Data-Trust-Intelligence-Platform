@@ -96,6 +96,8 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
     end.setUTCHours(0, 0, 0, 0);
     const start = new Date(end);
     start.setUTCDate(start.getUTCDate() - (days - 1));
+    const through = new Date(end);
+    through.setUTCDate(through.getUTCDate() + 1);
     const [qualityRows, incidentRows, freshnessRows] = await Promise.all([
       prisma.$queryRaw<Array<{ day: Date; runs: number; failedRuns: number; averageScore: number | null }>>(Prisma.sql`
         SELECT date_trunc('day', "executedAt") AS day,
@@ -103,7 +105,7 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
           COUNT(*) FILTER (WHERE "failedCount" > 0)::int AS "failedRuns",
           ROUND(AVG(score)::numeric, 2)::float8 AS "averageScore"
         FROM "QualityRun"
-        WHERE "organizationId" = ${organizationId}::uuid AND "executedAt" >= ${start}
+        WHERE "organizationId" = ${organizationId}::uuid AND "executedAt" >= ${start} AND "executedAt" < ${through}
         GROUP BY date_trunc('day', "executedAt") ORDER BY day ASC
       `),
       prisma.$queryRaw<Array<{ day: Date; incidents: number; highSeverity: number }>>(Prisma.sql`
@@ -111,7 +113,7 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
           COUNT(*)::int AS incidents,
           COUNT(*) FILTER (WHERE severity IN ('HIGH','CRITICAL'))::int AS "highSeverity"
         FROM "Incident"
-        WHERE "organizationId" = ${organizationId}::uuid AND "createdAt" >= ${start}
+        WHERE "organizationId" = ${organizationId}::uuid AND "createdAt" >= ${start} AND "createdAt" < ${through}
         GROUP BY date_trunc('day', "createdAt") ORDER BY day ASC
       `),
       prisma.$queryRaw<Array<{ day: Date; monitored: number; healthy: number; atRisk: number; breached: number; unknown: number }>>(Prisma.sql`
@@ -121,7 +123,7 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
           COUNT(*) FILTER (WHERE status = 'BREACHED')::int AS breached,
           COUNT(*) FILTER (WHERE status = 'UNKNOWN')::int AS unknown
         FROM "FreshnessSnapshot"
-        WHERE "organizationId" = ${organizationId}::uuid AND "snapshotDate" >= ${start}
+        WHERE "organizationId" = ${organizationId}::uuid AND "snapshotDate" >= ${start} AND "snapshotDate" < ${through}
         GROUP BY "snapshotDate" ORDER BY "snapshotDate" ASC
       `),
     ]);
@@ -137,7 +139,7 @@ reliabilityRouter.get("/analytics/trends", async (req, res, next) => {
       const f = freshness.get(key);
       return { date: key, qualityRuns: q?.runs ?? 0, failedRuns: q?.failedRuns ?? 0, averageQualityScore: q?.averageScore ?? null, incidentsCreated: i?.incidents ?? 0, highSeverityIncidents: i?.highSeverity ?? 0, freshnessMonitored: f?.monitored ?? 0, freshnessHealthy: f?.healthy ?? 0, freshnessAtRisk: f?.atRisk ?? 0, freshnessBreached: f?.breached ?? 0, freshnessUnknown: f?.unknown ?? 0 };
     });
-    res.json({ data: { generatedAt: new Date().toISOString(), windowDays: days, from: start.toISOString(), through: end.toISOString(), source: "persisted-records", series } });
+    res.json({ data: { generatedAt: new Date().toISOString(), windowDays: days, from: start.toISOString(), through: through.toISOString(), source: "persisted-records", series } });
   } catch (error) { next(error); }
 });
 
