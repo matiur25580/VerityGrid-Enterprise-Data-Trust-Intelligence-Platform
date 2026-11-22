@@ -30,6 +30,20 @@ enum DataClassification {
   CONFIDENTIAL
   RESTRICTED
 }
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+enum ContractCompatibilityMode {
+  BACKWARD
+  STRICT
+}
+enum ContractCompatibilityStatus {
+  COMPATIBLE
+  WARNING
+  INCOMPATIBLE
+}
 enum QualityRuleType {
   MIN_ROW_COUNT
   COLUMN_EXISTS
@@ -48,6 +62,8 @@ model Organization {
   memberships Membership[]
   dataAssets DataAsset[]
   dataSources DataSource[]
+  dataContracts DataContract[]
+  dataContracts DataContract[]
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
   lineageEdges LineageEdge[]
@@ -310,4 +326,36 @@ model AuditEvent {
   createdAt DateTime @default(now())
   @@index([organizationId, createdAt])
   @@index([organizationId, entityType, entityId])
+}
+
+
+model DataContract {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  organizationId     String                  @db.Uuid
+  assetId            String                  @db.Uuid
+  name               String                  @db.VarChar(160)
+  description        String?                 @db.Text
+  ownerName          String                  @db.VarChar(120)
+  version            Int                     @default(1)
+  status             ContractStatus          @default(DRAFT)
+  compatibilityMode  ContractCompatibilityMode @default(BACKWARD)
+  schemaSnapshot     Json                    @default("[]")
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  asset              DataAsset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  evaluations        DataContractEvaluation[]
+  @@unique([organizationId, assetId, version])
+  @@index([organizationId, assetId, status])
+}
+
+model DataContractEvaluation {
+  id             String                      @id @default(uuid()) @db.Uuid
+  organizationId String                      @db.Uuid
+  contractId     String                      @db.Uuid
+  status         ContractCompatibilityStatus
+  result         Json
+  evaluatedAt    DateTime                    @default(now())
+  contract       DataContract                @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  @@index([organizationId, contractId, evaluatedAt])
 }
