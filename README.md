@@ -3,7 +3,7 @@
 
 VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and governing enterprise data assets. It is designed around a practical data-reliability lifecycle: register a source, catalog its assets, define quality expectations, execute checks, investigate incidents, and preserve an auditable record of decisions.
 
-> **Status:** Foundation through Phase 6 reliability and intelligence implementation is committed. Phase 6 includes freshness policies, evidence-based insights, analytics exports and approval-gated classification changes. Migration, generated Prisma client, builds and automated tests still require local verification; do not treat this as deployment-ready.
+> **Status:** Foundation through Phase 6 reliability and intelligence implementation is committed. Phase 6 includes freshness policies, evidence-based insights, analytics exports, approval-gated classification changes and retryable incident notifications. Migration, generated Prisma client, builds and automated tests still require local verification; do not treat this as deployment-ready.
 
 ## Product principles
 - **Evidence over decoration:** metrics must come from persisted records and executed checks, never hardcoded claims.
@@ -46,8 +46,9 @@ Prerequisites: Node.js 20+, npm 10+, Docker Engine/Desktop.
    `npm run db:migrate`
 6. Start the API and web app:
    `npm run dev`
-7. Start the background validation worker in a second terminal:
+7. Start the background workers in a second terminal:
    `npm run worker:dev`
+8. Optionally set `INCIDENT_WEBHOOK_URL` to a trusted HTTPS webhook and `INCIDENT_WEBHOOK_TOKEN` for Bearer authentication; leave unset to keep notifications disabled.
 9. Run API integration tests (requires the migrated local database):
    `npm test`
 
