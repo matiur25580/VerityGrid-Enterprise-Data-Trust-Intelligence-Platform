@@ -52,8 +52,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -s "docs/screenshots/01-executive-overview.png"
+          test -s "docs/screenshots/02-data-catalog.png"
+          test -s "docs/screenshots/03-data-contracts.png"
+          test -s "docs/screenshots/04-data-lineage.png"
+          test -s "docs/screenshots/05-quality-center.png"
+          test -s "docs/screenshots/06-incident-response.png"
+          test -s "docs/screenshots/07-governance-approvals.png"
+          test -s "docs/screenshots/08-notification-deliveries.png"
+          test -s "docs/screenshots/09-reliability-overview.png"
+          test -s "docs/screenshots/10-reliability-trends.png"
+          test -s "docs/screenshots/11-freshness-sla.png"
+          test -s "docs/screenshots/12-evidence-insights.png"
           test "$(find docs/screenshots -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 12
-          find docs/screenshots -maxdepth 1 -type f -name '*.png' -size +0c | grep -q .
       - name: Commit verified screenshots
         run: |
           git config user.name "github-actions[bot]"
