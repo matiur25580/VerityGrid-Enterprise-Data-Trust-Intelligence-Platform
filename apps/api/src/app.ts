@@ -9,6 +9,7 @@ import { authRouter } from "./routes/auth";
 import { healthRouter } from "./routes/health";
 import { organizationsRouter } from "./routes/organizations";
 import { catalogRouter } from "./routes/catalog";
+import { qualityRouter } from "./routes/quality";
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/auth/login", authLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/organizations", organizationsRouter);
 app.use("/api/catalog", catalogRouter);
+app.use("/api/quality", qualityRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
