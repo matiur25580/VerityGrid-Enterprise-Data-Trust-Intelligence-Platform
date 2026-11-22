@@ -12,7 +12,17 @@ Phase 6 adds freshness objectives, operational analytics, bounded exports, evide
 
 Freshness is evaluated on read and by a BullMQ scheduled worker. The worker runs every five minutes by default (override with `FRESHNESS_SCHEDULE_INTERVAL_MS`, minimum 60 seconds), scans policies in bounded pages of 500, and creates one tenant-scoped incident per asset when it becomes at-risk or breached. State changes (including recovery to RESOLVED and later recurrence) are recorded in incident events and audit events. Repeated scheduler ticks are idempotent: unchanged states do not create duplicate incidents or events. Unknown observation timestamps do not create incidents.
 
-The worker process (`npm run worker` or `npm run worker:dev`) must run alongside the API and requires Redis plus the configured database. The notification provider is still a safe disabled adapter until a real provider is configured; incident creation and audit history work without outbound delivery. The default system actor is a reserved UUID used for worker-authored audit and incident events.
+The worker process (`npm run worker` or `npm run worker:dev`) must run alongside the API and requires Redis plus the configured database. The default system actor is a reserved UUID used for worker-authored audit and incident events.
+
+
+## Incident notification delivery
+
+- Configure optional `INCIDENT_WEBHOOK_URL` with a trusted HTTPS endpoint to enable outbound incident alerts. Leave it empty to keep delivery disabled. Optional `INCIDENT_WEBHOOK_TOKEN` is sent as a Bearer token; never commit real credentials.
+- The webhook receives a JSON event with `event`, `eventKey`, `organizationId`, `incidentId`, `severity` and `occurredAt`. The request includes an `idempotency-key` header; receivers should deduplicate on this value.
+- Webhook URLs must use HTTPS, have no embedded credentials, and use a public DNS hostname (IP literals and local hostnames are rejected). Requests time out after 8 seconds. Do not point this setting at an untrusted endpoint.
+- Notification jobs are queued in BullMQ with six exponential-backoff attempts. Failed jobs are retained for investigation; the worker logs job identifiers and bounded error codes, never webhook tokens or response bodies. Delivery is at-least-once: webhook receivers should honor the idempotency key.
+- The Operations Center exposes tenant-scoped delivery status at `GET /api/operations/notification-deliveries`; OWNER/ADMIN can retry a failed job with `POST /api/operations/notification-deliveries/:jobId/retry`. Retry actions are audited.
+- Run the worker process to deliver notifications. Without a configured webhook, incidents and audit records still work and outbound delivery remains disabled. Live delivery has not been verified until a real endpoint and credentials are configured.
 
 ## Historical trends
 
