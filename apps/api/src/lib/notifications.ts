@@ -45,6 +45,7 @@ async function deliver(job: Job<NotificationJob>) {
   try {
     const response = await fetch(config.url, {
       method: "POST",
+      redirect: "error",
       headers: { "content-type": "application/json", ...(config.token ? { authorization: `Bearer ${config.token}` } : {}), "idempotency-key": String(job.id) },
       body: JSON.stringify({ event: "veritygrid.incident", eventKey: job.data.eventKey, organizationId: job.data.organizationId, incidentId: job.data.incidentId, severity: job.data.severity, occurredAt: new Date().toISOString() }),
       signal: controller.signal,
