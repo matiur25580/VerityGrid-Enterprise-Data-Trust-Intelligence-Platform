@@ -61,7 +61,7 @@ The product is designed around a practical enterprise question: *Can teams trust
 | Layer | Technology | Responsibility |
 |---|---|---|
 | Web | React 18, TypeScript, Vite | Workspace UI and operational dashboards |
-| API | Node.js 20+, Express, TypeScript | Authenticated domain APIs |
+| API | Node.js 22.11+, Express, TypeScript | Authenticated domain APIs |
 | Data | PostgreSQL 16, Prisma 6 | Durable system of record and schema migrations |
 | Jobs | Redis 7, BullMQ, ioredis | Background execution, retries and scheduling |
 | Validation | Zod | Request and payload validation |
@@ -156,7 +156,7 @@ NOTIFICATION_WORKER_CONCURRENCY=4
 ## 6. Local development
 
 ### Prerequisites
-- Node.js 20.11 or newer
+- Node.js 22.11 or newer
 - npm
 - Docker Engine or Docker Desktop
 - PostgreSQL client utilities only if you plan to use the backup/restore scripts
@@ -227,7 +227,7 @@ Never commit real environment files or credentials. Replace local-only Compose c
 ## 7. Engineering quality and CI
 
 The repository includes:
-- **CI workflow:** installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration tests with PostgreSQL and Redis services.
+- **CI workflow:** tests Node.js 22, 24 and 26, installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration tests with PostgreSQL and Redis services.
 - **CodeQL:** scheduled and change-triggered JavaScript/TypeScript security analysis using extended queries.
 - **Dependabot:** weekly npm and GitHub Actions dependency update pull requests.
 - **Pull-request template:** prompts reviewers to consider tenant isolation, data handling, migrations, job idempotency, observability and rollback.
