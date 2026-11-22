@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -194,7 +195,8 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
       }
       records = rows.slice(1).map((row) => Object.fromEntries(headers.map((header, index) => [header, row[index] === "" ? null : row[index]])));
     }
-    const columns = Object.keys(records[0]).map((name) => ({
+    const fieldNames = [...new Set(records.flatMap((record) => Object.keys(record)))];
+    const columns = fieldNames.map((name) => ({
       name,
       type: inferType(records.map((record) => record[name])),
       nullable: records.some((record) => record[name] === null || record[name] === undefined || record[name] === ""),
@@ -215,14 +217,14 @@ catalogRouter.post("/assets/import", requireRoles("OWNER", "ADMIN", "DATA_STEWAR
         organizationId: req.tenant!.organizationId,
         sourceId,
         name: input.name,
-        fullyQualifiedName: `import.${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 100)}.${Date.now()}`,
+        fullyQualifiedName: `import.${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 100)}.${randomUUID()}`,
         description: input.description,
         ownerName: input.ownerName,
         classification: input.classification,
         assetType: "DATASET",
         rowCount: records.length,
         schema: columns as Prisma.InputJsonValue,
-        metadata: { importFormat: input.format, sample: records.slice(0, 5) } as Prisma.InputJsonValue,
+        metadata: { importFormat: input.format } as Prisma.InputJsonValue,
       },
     });
     res.status(201).json({ data: { asset, importedRows: records.length, discoveredColumns: columns.length } });
