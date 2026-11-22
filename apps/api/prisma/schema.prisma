@@ -121,10 +121,12 @@ model DataAsset {
   metadata Json @default("{}")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  lastObservedAt DateTime?
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   source DataSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   qualityRules QualityRule[]
   qualityRuns QualityRun[]
+  freshnessPolicy FreshnessPolicy?
   upstreamEdges LineageEdge[] @relation("LineageUpstream")
   downstreamEdges LineageEdge[] @relation("LineageDownstream")
   @@unique([organizationId, fullyQualifiedName])
@@ -133,7 +135,7 @@ model DataAsset {
   @@index([organizationId, classification])
 }
 
-model QualityRule {
+model FreshnessPolicy {\n  id String @id @default(uuid()) @db.Uuid\n  organizationId String @db.Uuid\n  assetId String @unique @db.Uuid\n  targetMinutes Int\n  warnAtPercent Int @default(80)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  asset DataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)\n  @@unique([organizationId, assetId])\n  @@index([organizationId, targetMinutes])\n}\n\nmodel QualityRule {
   id String @id @default(uuid()) @db.Uuid
   organizationId String @db.Uuid
   assetId String @db.Uuid
@@ -252,6 +254,9 @@ model GovernanceApproval {
   policyId String @db.Uuid
   requestedBy String @db.Uuid
   requestDescription String @db.VarChar(4000)
+  actionType String? @db.VarChar(60)
+  actionPayload Json?
+  executedAt DateTime?
   decision ApprovalDecision @default(PENDING)
   comment String? @db.VarChar(1000)
   decidedBy String? @db.Uuid
