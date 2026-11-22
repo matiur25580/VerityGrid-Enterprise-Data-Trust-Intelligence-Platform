@@ -227,7 +227,7 @@ Never commit real environment files or credentials. Replace local-only Compose c
 ## 7. Engineering quality and CI
 
 The repository includes:
-- **CI workflow:** installs dependencies, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration tests with PostgreSQL and Redis services.
+- **CI workflow:** installs dependencies, runs a high-severity npm audit, generates Prisma Client, applies migrations against ephemeral PostgreSQL, typechecks, builds and runs API integration tests with PostgreSQL and Redis services.
 - **CodeQL:** scheduled and change-triggered JavaScript/TypeScript security analysis using extended queries.
 - **Dependabot:** weekly npm and GitHub Actions dependency update pull requests.
 - **Pull-request template:** prompts reviewers to consider tenant isolation, data handling, migrations, job idempotency, observability and rollback.
@@ -272,9 +272,24 @@ Full runbook: [Production Readiness and Operations](docs/PRODUCTION_READINESS.md
 
 ## 9. Dashboard screenshot gallery
 
-The requested gallery is designed as a **single vertical column of 12 full-width dashboard captures**, each with a concise product-focused caption. The captures must come from a running, authenticated VerityGrid instance with synthetic demonstration data—not fabricated UI art.
+The requested gallery is designed as a **single vertical column of 12 full-width dashboard captures**, each followed by a descriptive caption. Captures must come from a running, authenticated VerityGrid instance with synthetic demonstration data—not fabricated UI art.
 
-**Capture assets are not yet committed.** A verified running preview URL or the original 12 dashboard image files is needed to produce genuine screenshots. The 12 planned views and their captions are documented in [the screenshot capture checklist](docs/screenshots/README.md). No broken image links or invented screenshots are included in this README.
+**Capture assets are not yet committed.** A verified running preview URL or the original 12 dashboard image files is needed to produce genuine screenshots. Until then, the 12 gallery slots and editorial captions are listed below as a capture plan, not as completed screenshots.
+
+1. **Executive workspace overview** — Bring the data estate, quality posture and operational priorities into one leadership-ready view. *Capture pending — `01-executive-overview.png`.*
+2. **Data catalog and discovery** — Show the searchable inventory, ownership and classification model that gives teams a shared source of truth. *Capture pending — `02-data-catalog.png`.*
+3. **Dataset profile and schema** — Reveal field-level structure and profiling evidence so engineers can assess completeness and shape. *Capture pending — `03-dataset-profile.png`.*
+4. **Quality rule management** — Demonstrate versioned validation expectations and active rules as executable data contracts. *Capture pending — `04-quality-rules.png`.*
+5. **Quality execution results** — Present a persisted validation run with clear pass, fail and skipped evidence. *Capture pending — `05-quality-results.png`.*
+6. **Lineage and impact analysis** — Visualize upstream/downstream relationships and the blast radius of a data change. *Capture pending — `06-lineage-impact.png`.*
+7. **Background processing operations** — Highlight queue activity, retry behavior and dead-letter visibility for resilient workloads. *Capture pending — `07-processing-operations.png`.*
+8. **Incident response workspace** — Show severity, lifecycle and event history from detection through recovery. *Capture pending — `08-incident-response.png`.*
+9. **Governance and approvals** — Demonstrate independent approval decisions and traceable controls over consequential changes. *Capture pending — `09-governance-approvals.png`.*
+10. **Freshness and SLA monitoring** — Connect freshness objectives to healthy, at-risk and breached operational states. *Capture pending — `10-freshness-sla.png`.*
+11. **Reliability trends and insights** — Tell the story of historical quality, incidents and evidence-linked recommendations. *Capture pending — `11-reliability-trends.png`.*
+12. **Notification delivery and auditability** — Close the operational loop with webhook delivery status, retries and audit evidence. *Capture pending — `12-notifications-audit.png`.*
+
+For the final gallery, place one image per row in numeric order, use descriptive alt text, and keep each caption directly below its image. See the [full screenshot capture checklist](docs/screenshots/README.md).
 
 ---
 
