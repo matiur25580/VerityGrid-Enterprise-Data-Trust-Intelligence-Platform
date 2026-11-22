@@ -102,7 +102,7 @@ reliabilityRouter.get("/exports", async (req, res, next) => {
       const now = new Date();
       rows = assets.map(a => { const status = a.freshnessPolicy ? freshnessStatus(a.lastObservedAt,a.freshnessPolicy.targetMinutes,a.freshnessPolicy.warnAtPercent,now) : {status:"UNCONFIGURED",ageMinutes:null,targetMinutes:null}; return [a.id,a.name,a.lastObservedAt,status.status,status.ageMinutes,status.targetMinutes]; });
     }
-    const csv = [headers, ...rows as unknown[][]].map(row => row.map(csvCell).join(",")).join("\r
+    const csv = [headers, ...(rows as unknown[][])].map(row => row.map(csvCell).join(",")).join("\r
 ");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="veritygrid-${type.data}-${new Date().toISOString().slice(0,10)}.csv"`);
