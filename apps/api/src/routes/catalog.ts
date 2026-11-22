@@ -52,29 +52,56 @@ catalogRouter.get("/assets", async (req, res, next) => {
       q: z.string().trim().max(120).optional(),
       classification: classification.optional(),
       sourceId: z.string().uuid().optional(),
+      cursor: z.string().uuid().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
     }).safeParse(req.query);
     if (!query.success) {
-      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid catalog filters." } });
+      res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid catalog filters or pagination parameters." } });
       return;
     }
-    const { q, classification: level, sourceId } = query.data;
-    const assets = await prisma.dataAsset.findMany({
-      where: {
-        organizationId: req.tenant!.organizationId,
-        ...(level ? { classification: level } : {}),
-        ...(sourceId ? { sourceId } : {}),
-        ...(q ? { OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { fullyQualifiedName: { contains: q, mode: "insensitive" } },
-          { description: { contains: q, mode: "insensitive" } },
-          { ownerName: { contains: q, mode: "insensitive" } },
-        ] } : {}),
-      },
+    const { q, classification: level, sourceId, cursor, limit } = query.data;
+    const where: Prisma.DataAssetWhereInput = {
+      organizationId: req.tenant!.organizationId,
+      ...(level ? { classification: level } : {}),
+      ...(sourceId ? { sourceId } : {}),
+      ...(q ? { OR: [
+        { name: { contains: q, mode: "insensitive" } },
+        { fullyQualifiedName: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { ownerName: { contains: q, mode: "insensitive" } },
+      ] } : {}),
+    };
+
+    if (cursor) {
+      const cursorAsset = await prisma.dataAsset.findFirst({
+        where: { ...where, id: cursor },
+        select: { id: true },
+      });
+      if (!cursorAsset) {
+        res.status(400).json({ error: { code: "INVALID_CURSOR", message: "The catalog cursor is invalid for this workspace or filter set." } });
+        return;
+      }
+    }
+
+    const results = await prisma.dataAsset.findMany({
+      where,
       include: { source: { select: { id: true, name: true, sourceType: true } } },
-      orderBy: { updatedAt: "desc" },
-      take: 100,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: limit + 1,
     });
-    res.json({ data: { assets } });
+    const hasMore = results.length > limit;
+    const assets = hasMore ? results.slice(0, limit) : results;
+    res.json({
+      data: {
+        assets,
+        pagination: {
+          limit,
+          hasMore,
+          nextCursor: hasMore ? assets[assets.length - 1]?.id ?? null : null,
+        },
+      },
+    });
   } catch (error) { next(error); }
 });
 
