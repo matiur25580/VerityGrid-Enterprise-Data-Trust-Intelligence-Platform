@@ -46,22 +46,26 @@ catalogRouter.get("/sources", async (req, res, next) => {
         return;
       }
     }
-    const results = await prisma.dataSource.findMany({
-      where,
-      select: {
-        id: true, name: true, sourceType: true, description: true,
-        createdAt: true, updatedAt: true,
-        _count: { select: { assets: true } },
-      },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      take: limit + 1,
-    });
+    const [results, totalCount] = await Promise.all([
+      prisma.dataSource.findMany({
+        where,
+        select: {
+          id: true, name: true, sourceType: true, description: true,
+          createdAt: true, updatedAt: true,
+          _count: { select: { assets: true } },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        take: limit + 1,
+      }),
+      prisma.dataSource.count({ where }),
+    ]);
     const hasMore = results.length > limit;
     const sources = hasMore ? results.slice(0, limit) : results;
     res.json({
       data: {
         sources,
+        totalCount,
         pagination: {
           limit,
           hasMore,
