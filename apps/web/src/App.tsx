@@ -3,7 +3,7 @@ import {
   Database, GitBranch, LayoutDashboard, LoaderCircle, LogOut, Search, ShieldCheck,
   Workflow, Eye, EyeOff, Building2, ChevronDown,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 
 type Membership = {
   role: string;
@@ -22,10 +22,12 @@ const navigation = [
 ];
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const response = await fetch(path, {
     ...init,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init.headers },
+    headers,
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
