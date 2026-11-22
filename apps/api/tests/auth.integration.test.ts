@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
@@ -24,13 +24,35 @@ describe("identity and tenant security", () => {
     await prisma.$disconnect();
   });
 
-  it("exposes liveness, database readiness and request correlation", async () => {
-    const live = await request(app).get("/api/health").expect(200);
-    expect(live.body.status).toBe("ok");
-    expect(live.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/i);
-    const ready = await request(app).get("/api/health/ready").expect(200);
-    expect(ready.body.status).toBe("ready");
-    expect(ready.body.dependencies.postgres).toBe("ok");
+  it("exposes liveness, database readiness and privacy-safe request correlation", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      const live = await request(app)
+        .get("/api/health?token=must-not-be-logged")
+        .set("x-request-id", "client-controlled-id")
+        .expect(200);
+      expect(live.body.status).toBe("ok");
+      const requestId = live.headers["x-request-id"] as string;
+      expect(requestId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(requestId).not.toBe("client-controlled-id");
+
+      const ready = await request(app).get("/api/health/ready").expect(200);
+      expect(ready.body.status).toBe("ready");
+      expect(ready.body.dependencies.postgres).toBe("ok");
+      expect(ready.headers["x-request-id"]).not.toBe(requestId);
+
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const completion = log.mock.calls
+        .map(([entry]) => String(entry))
+        .find((entry) => entry.includes(requestId));
+      expect(completion).toBeDefined();
+      expect(completion).toContain('"event":"http.request.completed"');
+      expect(completion).toContain('"path":"/api/health"');
+      expect(completion).not.toContain("must-not-be-logged");
+      expect(completion).not.toContain("client-controlled-id");
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("registers, authenticates, scopes tenants, rotates and revokes sessions", async () => {
