@@ -48,3 +48,17 @@ export function evaluateSchemaCompatibility(
     : drift.length ? 'WARNING' : 'COMPATIBLE';
   return { status, drift };
 }
+
+
+export const contractStatusTransitions = {
+  DRAFT: ["ACTIVE", "RETIRED"],
+  ACTIVE: ["RETIRED"],
+  RETIRED: [],
+} as const;
+
+export type ContractLifecycleStatus = keyof typeof contractStatusTransitions;
+
+export function canTransitionContractStatus(from: string, to: string): boolean {
+  return Object.prototype.hasOwnProperty.call(contractStatusTransitions, from)
+    && (contractStatusTransitions[from as ContractLifecycleStatus] as readonly string[]).includes(to);
+}
