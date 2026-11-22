@@ -32,6 +32,7 @@
 - [x] CSV/JSON import with 900 KB payload, row and column limits
 - [x] Dataset metadata and automatic field/type/nullability discovery
 - [x] Ownership, classification and tenant-scoped catalog search
+- [x] Stable cursor-based catalog pagination with tenant/filter-bound cursor validation
 - [ ] PostgreSQL connection validation and live schema introspection
 - [ ] Object-storage-backed large-file ingestion
 
