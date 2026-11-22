@@ -250,6 +250,7 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
   const [classification, setClassification] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [importClassification, setImportClassification] = useState("INTERNAL");
+  const [importSourceId, setImportSourceId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -302,7 +303,7 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
       await api("/api/catalog/assets/import", {
         method: "POST",
         headers: { "x-organization-id": organizationId },
-        body: JSON.stringify({ name: file.name.replace(/\.(csv|json)$/i, ""), format, content, ownerName: ownerName.trim() || undefined, classification: importClassification }),
+        body: JSON.stringify({ name: file.name.replace(/\.(csv|json)$/i, ""), format, content, ownerName: ownerName.trim() || undefined, classification: importClassification, sourceId: importSourceId || undefined }),
       });
       setMessage(`${file.name} imported successfully.`);
       await loadCatalog();
@@ -312,7 +313,7 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
 
   return (
     <div className="catalog-page">
-      <div className="catalog-intro"><div><div className="eyebrow">DISCOVER & GOVERN</div><h2>Data catalog</h2><p>Register sources, import structured files and explore automatically discovered dataset schemas.</p></div><div className="catalog-import-controls"><input aria-label="Dataset owner" value={ownerName} onChange={(event) => setOwnerName(event.target.value)} placeholder="Dataset owner (optional)"/><select aria-label="Import classification" value={importClassification} onChange={(event) => setImportClassification(event.target.value)}><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="RESTRICTED">Restricted</option></select><label className="catalog-import-button">{busy ? "Working…" : "Import CSV / JSON"}<input type="file" accept=".csv,.json,application/json,text/csv" onChange={(event) => void importFile(event)} disabled={busy}/></label></div></div>
+      <div className="catalog-intro"><div><div className="eyebrow">DISCOVER & GOVERN</div><h2>Data catalog</h2><p>Register sources, import structured files and explore automatically discovered dataset schemas.</p></div><div className="catalog-import-controls"><input aria-label="Dataset owner" value={ownerName} onChange={(event) => setOwnerName(event.target.value)} placeholder="Dataset owner (optional)"/><select aria-label="Import classification" value={importClassification} onChange={(event) => setImportClassification(event.target.value)}><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="RESTRICTED">Restricted</option></select><select aria-label="Import source" value={importSourceId} onChange={(event) => setImportSourceId(event.target.value)}><option value="">Auto-create source</option>{sources.filter((source) => source.sourceType === "CSV" || source.sourceType === "JSON").map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select><label className="catalog-import-button">{busy ? "Working…" : "Import CSV / JSON"}<input type="file" accept=".csv,.json,application/json,text/csv" onChange={(event) => void importFile(event)} disabled={busy}/></label></div></div>
       {message && <div className="inline-notice"><CheckCircle2 size={15}/>{message}</div>}
       {error && <div className="inline-error">{error}<button onClick={() => setError("")}>Dismiss</button></div>}
       <div className="catalog-stats"><div className="panel"><span>REGISTERED ASSETS</span><b>{assets.length}</b></div><div className="panel"><span>DATA SOURCES</span><b>{sources.length}</b></div><div className="panel"><span>CLASSIFIED DATASETS</span><b>{assets.filter((asset) => asset.classification !== "INTERNAL").length}</b></div></div>
