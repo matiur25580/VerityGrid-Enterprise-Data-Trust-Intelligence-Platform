@@ -61,7 +61,10 @@
 - [x] Notification-provider hook on freshness incident transitions (delivery remains disabled until configured)
 - [x] Tenant-scoped daily quality, incident and freshness trend series (7–90 day window)
 - [x] Daily freshness snapshots with a deduplicated one-row-per-asset-per-day key
-- [ ] Live notification-provider configuration and delivery verification
+- [x] Configurable HTTPS webhook notification provider with bounded timeouts and secret-safe logging
+- [x] Durable BullMQ notification delivery with exponential retries and idempotency keys
+- [x] Tenant-scoped notification delivery visibility and administrator retry controls
+- [ ] Configure a real endpoint and verify live notification delivery
 
 ## Phase 7 — Production hardening
 - [ ] Threat model and security review
