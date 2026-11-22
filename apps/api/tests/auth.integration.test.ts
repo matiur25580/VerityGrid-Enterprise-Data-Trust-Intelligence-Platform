@@ -83,6 +83,11 @@ describe("identity and tenant security", () => {
     expect(catalog.body.data.assets).toHaveLength(1);
     expect(catalog.body.data.assets[0].classification).toBe("CONFIDENTIAL");
 
+    await client
+      .get("/api/catalog/assets")
+      .set("x-organization-id", randomUUID())
+      .expect(403);
+
     await client.post("/api/auth/sessions/rotate").expect(200);
     await client.get("/api/auth/me").expect(200);
 
