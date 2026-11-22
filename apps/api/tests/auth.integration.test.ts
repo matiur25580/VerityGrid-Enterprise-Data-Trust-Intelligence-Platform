@@ -75,6 +75,45 @@ describe("identity and tenant security", () => {
       .expect(201);
     expect(imported.body.data.importedRows).toBe(2);
     expect(imported.body.data.discoveredColumns).toBe(2);
+    const assetId = imported.body.data.asset.id as string;
+
+    await client.post(`/api/quality/assets/${assetId}/rules`)
+      .set("x-organization-id", organizationId)
+      .send({ name: "Minimum order rows", ruleType: "MIN_ROW_COUNT", params: { minimum: 2 } })
+      .expect(201);
+    await client.post(`/api/quality/assets/${assetId}/rules`)
+      .set("x-organization-id", organizationId)
+      .send({ name: "Order ID uniqueness", ruleType: "UNIQUE", params: { column: "order_id" } })
+      .expect(201);
+    const qualityRun = await client.post(`/api/quality/assets/${assetId}/runs`)
+      .set("x-organization-id", organizationId)
+      .send({})
+      .expect(201);
+    expect(qualityRun.body.data.run.score).toBe(100);
+    expect(qualityRun.body.data.run.passedCount).toBe(2);
+
+    const downstream = await client.post("/api/catalog/assets")
+      .set("x-organization-id", organizationId)
+      .send({
+        name: "order_summary",
+        fullyQualifiedName: "analytics.order_summary",
+        assetType: "TABLE",
+        schema: [{ name: "order_id", type: "NUMBER" }],
+      })
+      .expect(201);
+    const downstreamId = downstream.body.data.asset.id as string;
+    await client.post("/api/quality/lineage")
+      .set("x-organization-id", organizationId)
+      .send({ upstreamAssetId: assetId, downstreamAssetId: downstreamId })
+      .expect(201);
+    const impact = await client.get(`/api/quality/assets/${assetId}/lineage`)
+      .set("x-organization-id", organizationId)
+      .expect(200);
+    expect(impact.body.data.impactCount).toBe(1);
+    await client.post("/api/quality/lineage")
+      .set("x-organization-id", organizationId)
+      .send({ upstreamAssetId: downstreamId, downstreamAssetId: assetId })
+      .expect(409);
 
     const catalog = await client
       .get("/api/catalog/assets?q=orders")
