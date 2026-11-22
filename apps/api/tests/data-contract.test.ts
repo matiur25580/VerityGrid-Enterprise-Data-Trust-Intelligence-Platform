@@ -36,3 +36,19 @@ describe("data contract schema compatibility", () => {
     expect(result.status).toBe("INCOMPATIBLE");
   });
 });
+
+
+describe("data contract lifecycle", () => {
+  it("allows draft activation and retirement of active contracts", async () => {
+    const { canTransitionContractStatus } = await import("../src/lib/data-contract");
+    expect(canTransitionContractStatus("DRAFT", "ACTIVE")).toBe(true);
+    expect(canTransitionContractStatus("ACTIVE", "RETIRED")).toBe(true);
+  });
+
+  it("prevents reactivating retired contracts and other invalid transitions", async () => {
+    const { canTransitionContractStatus } = await import("../src/lib/data-contract");
+    expect(canTransitionContractStatus("RETIRED", "ACTIVE")).toBe(false);
+    expect(canTransitionContractStatus("RETIRED", "DRAFT")).toBe(false);
+    expect(canTransitionContractStatus("ACTIVE", "DRAFT")).toBe(false);
+  });
+});

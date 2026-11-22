@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
-import { evaluateSchemaCompatibility, type ContractField } from "../lib/data-contract";
+import { canTransitionContractStatus, evaluateSchemaCompatibility, type ContractField } from "../lib/data-contract";
 
 export const contractRouter = Router();
 contractRouter.use(authenticate, requireTenant);
@@ -78,11 +78,24 @@ contractRouter.patch("/:contractId/status", writer, async (req, res, next) => {
     const organizationId = req.tenant!.organizationId;
     const current = await prisma.dataContract.findFirst({ where: { id: id.data, organizationId } });
     if (!current) { res.status(404).json({ error: { code: "CONTRACT_NOT_FOUND", message: "Contract not found in this workspace." } }); return; }
+    if (!canTransitionContractStatus(current.status, input.data.status)) {
+      res.status(409).json({ error: { code: "CONTRACT_INVALID_TRANSITION", message: `A contract cannot move from ${current.status} to ${input.data.status}.` } });
+      return;
+    }
     const updated = await prisma.$transaction(async tx => {
-      const record = await tx.dataContract.update({ where: { id: current.id }, data: { status: input.data.status } });
+      const changed = await tx.dataContract.updateMany({
+        where: { id: current.id, organizationId, status: current.status },
+        data: { status: input.data.status },
+      });
+      if (changed.count !== 1) return null;
+      const record = await tx.dataContract.findFirstOrThrow({ where: { id: current.id, organizationId } });
       await tx.auditEvent.create({ data: { organizationId, actorId: req.auth!.userId, action: "DATA_CONTRACT_STATUS_CHANGED", entityType: "DataContract", entityId: record.id, metadata: { from: current.status, to: record.status } } });
       return record;
     });
+    if (!updated) {
+      res.status(409).json({ error: { code: "CONTRACT_CONCURRENT_UPDATE", message: "The contract changed while this action was being processed. Refresh and try again." } });
+      return;
+    }
     res.json({ data: { contract: updated } });
   } catch (error) { next(error); }
 });
