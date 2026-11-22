@@ -17,7 +17,7 @@
     "worker": "node dist/worker.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "6.12.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -35,7 +35,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
-    "prisma": "^6.2.1",
+    "prisma": "6.12.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "supertest": "^7.0.0",
