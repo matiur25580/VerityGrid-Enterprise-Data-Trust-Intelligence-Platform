@@ -99,6 +99,48 @@ describe("identity and tenant security", () => {
       .expect(201);
     expect(source.body.data.source.organizationId).toBe(organizationId);
 
+    const linkedAsset = await client.post("/api/catalog/assets")
+      .set("x-organization-id", organizationId)
+      .send({
+        name: "finance_ledger",
+        fullyQualifiedName: "finance.ledger",
+        assetType: "TABLE",
+        sourceId: source.body.data.source.id,
+        schema: [{ name: "entry_id", type: "NUMBER" }],
+      })
+      .expect(201);
+    const sourceDetail = await client.get(`/api/catalog/sources/${source.body.data.source.id}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(sourceDetail.body.data.source._count.assets).toBe(1);
+    expect(sourceDetail.body.data.source.assets[0].id).toBe(linkedAsset.body.data.asset.id);
+    expect(sourceDetail.body.data.source).not.toHaveProperty("metadata");
+
+    await client.post("/api/catalog/sources")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Finance Warehouse", sourceType: "POSTGRESQL" })
+      .expect(201);
+    const otherSource = await client.post("/api/catalog/sources")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Operations Archive", sourceType: "JSON" })
+      .expect(201);
+    const firstSourcePage = await client.get("/api/catalog/sources?q=Finance&limit=1")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(firstSourcePage.body.data.sources).toHaveLength(1);
+    expect(firstSourcePage.body.data.totalCount).toBe(2);
+    expect(firstSourcePage.body.data.sources[0]).not.toHaveProperty("metadata");
+    expect(firstSourcePage.body.data.pagination.hasMore).toBe(true);
+    const secondSourcePage = await client.get(`/api/catalog/sources?q=Finance&limit=1&cursor=${firstSourcePage.body.data.pagination.nextCursor}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(secondSourcePage.body.data.sources).toHaveLength(1);
+    expect(secondSourcePage.body.data.pagination.hasMore).toBe(false);
+    await client.get(`/api/catalog/sources?sourceType=CSV&cursor=${otherSource.body.data.source.id}`)
+      .set("x-organization-id", organizationId).expect(400);
+    await client.get(`/api/catalog/sources/${randomUUID()}`)
+      .set("x-organization-id", organizationId).expect(404);
+    await client.get(`/api/catalog/sources/${source.body.data.source.id}`)
+      .set("x-organization-id", randomUUID()).expect(403);
+
+
     const imported = await client
       .post("/api/catalog/assets/import")
       .set("x-organization-id", organizationId)
@@ -138,7 +180,7 @@ describe("identity and tenant security", () => {
     expect(freshness.body.data.items.find((item: any) => item.assetId === assetId).status).toBe("HEALTHY");
     const analytics = await client.get("/api/reliability/analytics")
       .set("x-organization-id", organizationId).expect(200);
-    expect(analytics.body.data.assets).toBe(1);
+    expect(analytics.body.data.assets).toBe(2);
     expect(analytics.body.data.qualityRuns).toBe(1);
     const exportResponse = await client.get("/api/reliability/exports?type=quality-runs")
       .set("x-organization-id", organizationId).expect(200);
@@ -249,6 +291,36 @@ describe("identity and tenant security", () => {
       .expect(200);
     expect(catalog.body.data.assets).toHaveLength(1);
     expect(catalog.body.data.assets[0].classification).toBe("RESTRICTED");
+
+    for (const suffix of ["alpha", "bravo", "charlie"]) {
+      await client.post("/api/catalog/assets")
+        .set("x-organization-id", organizationId)
+        .send({
+          name: `pagination-${suffix}`,
+          fullyQualifiedName: `test.pagination_${suffix}`,
+          assetType: "TABLE",
+          schema: [],
+        })
+        .expect(201);
+    }
+    const firstPage = await client.get("/api/catalog/assets?q=pagination&limit=2")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(firstPage.body.data.assets).toHaveLength(2);
+    expect(firstPage.body.data.pagination.hasMore).toBe(true);
+    expect(firstPage.body.data.pagination.nextCursor).toBeTruthy();
+
+    const secondPage = await client.get(`/api/catalog/assets?q=pagination&limit=2&cursor=${firstPage.body.data.pagination.nextCursor}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(secondPage.body.data.assets).toHaveLength(1);
+    expect(secondPage.body.data.pagination.hasMore).toBe(false);
+    expect(secondPage.body.data.pagination.nextCursor).toBeNull();
+    expect(firstPage.body.data.assets.map((asset: any) => asset.id))
+      .not.toContain(secondPage.body.data.assets[0].id);
+
+    await client.get(`/api/catalog/assets?cursor=${randomUUID()}`)
+      .set("x-organization-id", organizationId)
+      .expect(400);
+
 
     await client
       .get("/api/catalog/assets")

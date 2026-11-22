@@ -393,6 +393,8 @@ function DataLineagePage({ organizationId }: { organizationId: string }) {
 function DataCatalogPage({ organizationId }: { organizationId: string }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [sources, setSources] = useState<any[]>([]);
+  const [sourceTotalCount, setSourceTotalCount] = useState(0);
+  const [sourcePagination, setSourcePagination] = useState<{ limit: number; hasMore: boolean; nextCursor: string | null } | null>(null);
   const [search, setSearch] = useState("");
   const [classification, setClassification] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -407,10 +409,12 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
     const headers = { "x-organization-id": organizationId };
     const [assetResult, sourceResult] = await Promise.all([
       api<{ data: { assets: any[] } }>(`/api/catalog/assets?q=${encodeURIComponent(search)}${classification ? `&classification=${classification}` : ""}`, { headers }),
-      api<{ data: { sources: any[] } }>("/api/catalog/sources", { headers }),
+      api<{ data: { sources: any[]; totalCount: number; pagination: { limit: number; hasMore: boolean; nextCursor: string | null } } }>("/api/catalog/sources?limit=50", { headers }),
     ]);
     setAssets(assetResult.data.assets);
     setSources(sourceResult.data.sources);
+    setSourceTotalCount(sourceResult.data.totalCount);
+    setSourcePagination(sourceResult.data.pagination);
   }, [organizationId, search, classification]);
 
   useEffect(() => {
@@ -418,6 +422,23 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
     void loadCatalog().catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : "Catalog could not be loaded."); });
     return () => { active = false; };
   }, [loadCatalog]);
+
+  async function loadMoreSources() {
+    if (!organizationId || !sourcePagination?.hasMore || !sourcePagination.nextCursor) return;
+    setBusy(true); setError("");
+    try {
+      const result = await api<{ data: { sources: any[]; pagination: { limit: number; hasMore: boolean; nextCursor: string | null } } }>(
+        `/api/catalog/sources?limit=${sourcePagination.limit}&cursor=${encodeURIComponent(sourcePagination.nextCursor)}`,
+        { headers: { "x-organization-id": organizationId } },
+      );
+      setSources((current) => [...current, ...result.data.sources]);
+      setSourcePagination(result.data.pagination);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not load more sources.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function createSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -463,12 +484,12 @@ function DataCatalogPage({ organizationId }: { organizationId: string }) {
       <div className="catalog-intro"><div><div className="eyebrow">DISCOVER & GOVERN</div><h2>Data catalog</h2><p>Register sources, import structured files and explore automatically discovered dataset schemas.</p></div><div className="catalog-import-controls"><input aria-label="Dataset owner" value={ownerName} onChange={(event) => setOwnerName(event.target.value)} placeholder="Dataset owner (optional)"/><select aria-label="Import classification" value={importClassification} onChange={(event) => setImportClassification(event.target.value)}><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="RESTRICTED">Restricted</option></select><select aria-label="Import source" value={importSourceId} onChange={(event) => setImportSourceId(event.target.value)}><option value="">Auto-create source</option>{sources.filter((source) => source.sourceType === "CSV" || source.sourceType === "JSON").map((source) => <option key={source.id} value={source.id}>{source.name}</option>)}</select><label className="catalog-import-button">{busy ? "Working…" : "Import CSV / JSON"}<input type="file" accept=".csv,.json,application/json,text/csv" onChange={(event) => void importFile(event)} disabled={busy}/></label></div></div>
       {message && <div className="inline-notice"><CheckCircle2 size={15}/>{message}</div>}
       {error && <div className="inline-error">{error}<button onClick={() => setError("")}>Dismiss</button></div>}
-      <div className="catalog-stats"><div className="panel"><span>REGISTERED ASSETS</span><b>{assets.length}</b></div><div className="panel"><span>DATA SOURCES</span><b>{sources.length}</b></div><div className="panel"><span>CLASSIFIED DATASETS</span><b>{assets.filter((asset) => asset.classification !== "INTERNAL").length}</b></div></div>
+      <div className="catalog-stats"><div className="panel"><span>REGISTERED ASSETS</span><b>{assets.length}</b></div><div className="panel"><span>DATA SOURCES</span><b>{sourceTotalCount}</b></div><div className="panel"><span>CLASSIFIED DATASETS</span><b>{assets.filter((asset) => asset.classification !== "INTERNAL").length}</b></div></div>
       <section className="panel catalog-register"><div className="panel-heading"><div><h3>Register a data source</h3><p>Save a source in this workspace. Credentials are intentionally not collected in this registry form.</p></div></div><form onSubmit={createSource}><input name="sourceName" placeholder="Source name (e.g. Finance Warehouse)" minLength={2} maxLength={160} required/><select name="sourceType" defaultValue="POSTGRESQL"><option value="POSTGRESQL">PostgreSQL</option><option value="CSV">CSV collection</option><option value="JSON">JSON collection</option></select><input name="sourceDescription" placeholder="Description (optional)" maxLength={2000}/><button type="submit" disabled={busy}>{busy ? "Saving…" : "Register source"}</button></form></section>
       <section className="panel catalog-assets"><div className="panel-heading"><div><h3>Cataloged datasets</h3><p>Search by dataset name, fully qualified name or owner.</p></div><span className="catalog-count">{assets.length} shown · max 100</span></div><div className="catalog-filters"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search datasets…"/><select value={classification} onChange={(event) => setClassification(event.target.value)}><option value="">All classifications</option><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="RESTRICTED">Restricted</option></select></div>
         {assets.length ? <div className="catalog-table-wrap"><table className="catalog-table"><thead><tr><th>DATASET</th><th>SOURCE</th><th>ROWS</th><th>FIELDS</th><th>CLASSIFICATION</th><th>OWNER</th></tr></thead><tbody>{assets.map((asset) => <tr key={asset.id}><td><b>{asset.name}</b><small>{asset.fullyQualifiedName}</small></td><td>{asset.source?.name ?? "Manual"}</td><td>{asset.rowCount ?? "—"}</td><td>{Array.isArray(asset.schema) ? asset.schema.length : 0}</td><td><span className={`classification-tag ${String(asset.classification).toLowerCase()}`}>{asset.classification}</span></td><td>{asset.ownerName ?? "Unassigned"}</td></tr>)}</tbody></table></div> : <div className="catalog-empty"><Database size={24}/><b>No datasets cataloged yet</b><p>Register a source or import a CSV/JSON file to create your first dataset and discover its schema.</p></div>}
       </section>
-      <section className="panel catalog-sources"><div className="panel-heading"><div><h3>Registered sources</h3><p>Organization-scoped source registry</p></div></div>{sources.length ? sources.map((source) => <div className="source-row" key={source.id}><div className="source-icon"><Database size={17}/></div><div><b>{source.name}</b><small>{source.description || source.sourceType}</small></div><span>{source._count?.assets ?? 0} assets</span></div>) : <p className="catalog-source-empty">No source connections registered.</p>}</section>
+      <section className="panel catalog-sources"><div className="panel-heading"><div><h3>Registered sources</h3><p>Showing {sources.length} of {sourceTotalCount} workspace sources</p></div></div>{sources.length ? sources.map((source) => <div className="source-row" key={source.id}><div className="source-icon"><Database size={17}/></div><div><b>{source.name}</b><small>{source.description || source.sourceType}</small></div><span>{source._count?.assets ?? 0} assets</span></div>) : <p className="catalog-source-empty">No source connections registered.</p>}{sourcePagination?.hasMore && <button type="button" onClick={() => void loadMoreSources()} disabled={busy}>{busy ? "Loading…" : "Load more sources"}</button>}</section>
     </div>
   );
 }
