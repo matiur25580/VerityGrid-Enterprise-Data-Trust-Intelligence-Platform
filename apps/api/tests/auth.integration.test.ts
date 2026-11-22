@@ -266,6 +266,20 @@ describe("identity and tenant security", () => {
     expect(login.headers["set-cookie"]).toBeDefined();
   });
 
+  it("performs a bcrypt comparison for unknown accounts to reduce login timing disclosure", async () => {
+    const compare = vi.spyOn(bcrypt, "compare");
+    try {
+      await request(app)
+        .post("/api/auth/login")
+        .send({ email: `missing-${randomUUID()}@veritygrid.test`, password })
+        .expect(401);
+      expect(compare).toHaveBeenCalledTimes(1);
+      expect(compare).toHaveBeenCalledWith(password, expect.any(String));
+    } finally {
+      compare.mockRestore();
+    }
+  });
+
   it("rejects weak passwords and malformed registration payloads", async () => {
     await request(app)
       .post("/api/auth/register")
