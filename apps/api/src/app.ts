@@ -15,6 +15,7 @@ import { catalogRouter } from "./routes/catalog";
 import { qualityRouter } from "./routes/quality";
 import { operationsRouter } from "./routes/operations";
 import { reliabilityRouter } from "./routes/reliability";
+import { contractRouter } from "./routes/contracts";
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use("/api/catalog", catalogRouter);
 app.use("/api/quality", qualityRouter);
 app.use("/api/operations", operationsRouter);
 app.use("/api/reliability", reliabilityRouter);
+app.use("/api/contracts", contractRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
