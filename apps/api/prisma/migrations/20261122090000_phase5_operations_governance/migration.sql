@@ -21,3 +21,6 @@ ALTER TABLE "QualityRun" ADD COLUMN "jobKey" VARCHAR(180);
 CREATE UNIQUE INDEX "QualityRun_jobKey_key" ON "QualityRun"("jobKey");
 ALTER TABLE "IncidentEvent" ADD COLUMN "sourceKey" VARCHAR(180);
 CREATE UNIQUE INDEX "IncidentEvent_sourceKey_key" ON "IncidentEvent"("sourceKey");
+
+ALTER TABLE "AuditEvent" ADD COLUMN "sourceKey" VARCHAR(180);
+CREATE UNIQUE INDEX "AuditEvent_sourceKey_key" ON "AuditEvent"("sourceKey");
