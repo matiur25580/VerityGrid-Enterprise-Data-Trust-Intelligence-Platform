@@ -42,7 +42,7 @@ reliabilityRouter.get("/freshness", async (req, res, next) => {
       atRisk: items.filter(x => x.status === "AT_RISK").length,
       breached: items.filter(x => x.status === "BREACHED").length,
       unknown: items.filter(x => x.status === "UNKNOWN" || x.status === "UNCONFIGURED").length,
-    } });
+    } } });
   } catch (error) { next(error); }
 });
 
