@@ -180,3 +180,74 @@ model LineageEdge {
   @@index([organizationId, upstreamAssetId])
   @@index([organizationId, downstreamAssetId])
 }
+
+enum IncidentSeverity { LOW MEDIUM HIGH CRITICAL }
+enum IncidentStatus { OPEN ACKNOWLEDGED RESOLVED CLOSED }
+enum PolicyType { CLASSIFICATION_CHANGE DATA_ACCESS RETENTION }
+enum ApprovalDecision { PENDING APPROVED REJECTED }
+
+model Incident {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  sourceKey String @db.VarChar(180)
+  title String @db.VarChar(180)
+  description String? @db.Text
+  severity IncidentSeverity
+  status IncidentStatus @default(OPEN)
+  assetId String? @db.Uuid
+  createdBy String @db.Uuid
+  assigneeId String? @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events IncidentEvent[]
+  @@unique([organizationId, sourceKey])
+  @@index([organizationId, status, severity, createdAt])
+}
+model IncidentEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  incidentId String @db.Uuid
+  actorId String @db.Uuid
+  eventType String @db.VarChar(40)
+  detail String @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  incident Incident @relation(fields:[incidentId],references:[id],onDelete:Cascade)
+  @@index([organizationId, incidentId, createdAt])
+}
+model GovernancePolicy {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  name String @db.VarChar(160)
+  description String? @db.Text
+  policyType PolicyType
+  requiresApproval Boolean @default(true)
+  createdBy String @db.Uuid
+  createdAt DateTime @default(now())
+  approvals GovernanceApproval[]
+  @@index([organizationId, createdAt])
+}
+model GovernanceApproval {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  policyId String @db.Uuid
+  requestedBy String @db.Uuid
+  decision ApprovalDecision @default(PENDING)
+  comment String? @db.VarChar(1000)
+  decidedBy String? @db.Uuid
+  decidedAt DateTime?
+  createdAt DateTime @default(now())
+  policy GovernancePolicy @relation(fields:[policyId],references:[id],onDelete:Cascade)
+  @@index([organizationId, decision, createdAt])
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  actorId String @db.Uuid
+  action String @db.VarChar(80)
+  entityType String @db.VarChar(80)
+  entityId String @db.VarChar(180)
+  metadata Json @default("{}")
+  createdAt DateTime @default(now())
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
+}
