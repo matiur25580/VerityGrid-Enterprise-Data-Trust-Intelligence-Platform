@@ -1,7 +1,7 @@
 # Architecture
 
 ## System boundaries
-VerityGrid starts as a modular monolith with independently runnable API and web applications. Background workers will be introduced as a separate process when ingestion and rule execution are implemented.
+VerityGrid is a modular monolith with independently runnable API and web applications plus a separately runnable BullMQ validation worker.
 
 ```text
 React SPA (Vite)
@@ -16,7 +16,7 @@ Express API
     |
     +---- PostgreSQL (system of record)
     |
-    +---- Redis (queues/cache; worker phase)
+    +---- Redis (BullMQ queues, retries and dead-letter retention)
              |
              +---- Background worker processes
 ```
@@ -42,7 +42,7 @@ Express API
 - Audit and integrations
 
 ## Current implementation boundary
-The initial repository foundation includes the React shell, Express health endpoint, local PostgreSQL/Redis services and the first Prisma entities. Authentication, tenant enforcement, catalog workflows and all subsequent modules remain development work until implemented and tested.
+The repository includes authentication and tenant enforcement, data catalog and aggregate profiling, quality validation and lineage, background operations and governance, freshness/SLA evaluation, persisted-record analytics, evidence-rule recommendations and approval-gated classification changes. Runtime verification, periodic SLA scheduling, external notification delivery, live PostgreSQL source introspection and generative AI integration remain outside the verified implementation boundary.
 
 ## Operations and governance (Phase 5)
 The API enqueues tenant-tagged quality jobs in Redis/BullMQ. A separate worker process executes the same supported aggregate-backed rule families, retries transient failures with exponential backoff, limits concurrency, and retains terminal failures in a dead-letter queue. API reads always filter job payloads by the authenticated workspace. Incidents carry lifecycle state and append-only event records; governance policies produce approval requests with a one-way decision transition. Audit events are created for key actions and exposed read-only to workspace administrators. Notification delivery is represented by a provider interface and remains disabled until a real provider and recipient policy are configured.
