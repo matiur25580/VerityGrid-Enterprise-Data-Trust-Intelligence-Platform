@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type ContractField = { name: string; type: string; nullable?: boolean };
 export type ContractDrift = {
   code: 'FIELD_REMOVED' | 'FIELD_TYPE_CHANGED' | 'NULLABILITY_RELAXED' | 'FIELD_ADDED';
@@ -62,3 +64,22 @@ export function canTransitionContractStatus(from: string, to: string): boolean {
   return Object.prototype.hasOwnProperty.call(contractStatusTransitions, from)
     && (contractStatusTransitions[from as ContractLifecycleStatus] as readonly string[]).includes(to);
 }
+
+
+export const contractFieldsSchema = z.array(z.object({
+  name: z.string().trim().min(1).max(128),
+  type: z.string().trim().min(1).max(80),
+  nullable: z.boolean().optional(),
+})).max(500).superRefine((fields, context) => {
+  const seen = new Set<string>();
+  fields.forEach((field, index) => {
+    if (seen.has(field.name)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, "name"],
+        message: `Duplicate field name: ${field.name}`,
+      });
+    }
+    seen.add(field.name);
+  });
+});
