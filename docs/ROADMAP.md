@@ -9,10 +9,10 @@
 - [x] First responsive product shell
 - [ ] Install dependencies and verify clean builds
 - [ ] Add automated API and frontend test runners
-- [x] Add database migrations and GitHub Actions CI workflow (execution pending)
-- [x] Add frontend Vitest runner and error-boundary regression coverage (execution pending)
+- [x] Add database migrations and GitHub Actions CI workflow (main CI passed on Node.js 22, 24 and 26)
+- [x] Add frontend Vitest runner and error-boundary regression coverage (CI passed)
 - [x] Add top-level React error boundary with a safe reload fallback (manual verification pending)
-- [x] Extend API integration coverage for server-owned correlation IDs and query-string-safe completion logs (execution pending)
+- [x] Extend API integration coverage for server-owned correlation IDs and query-string-safe completion logs (CI passed)
 
 ## Phase 2 — Identity and tenant security
 - [x] Organization registration and sign-in API
@@ -23,7 +23,7 @@
 - [x] React sign-in and organization registration screens
 - [x] Session restoration, workspace selection and sign-out UI
 - [ ] Tenant-scoped repositories for all future tenant-owned resources
-- [x] Add API integration coverage for registration, login, session rotation/revocation and tenant authorization (authored; execution pending)
+- [x] Add API integration coverage for registration, login, session rotation/revocation and tenant authorization (CI passed)
 - [ ] Run security and integration tests against a migrated local database
 - [ ] Email verification and account recovery
 
@@ -75,9 +75,9 @@
 - [x] Server-generated request correlation IDs and privacy-conscious structured HTTP logs
 - [x] API liveness and PostgreSQL readiness endpoints
 - [x] Global API rate limiting with stricter authentication limits
-- [x] Redis-backed atomic distributed API and authentication rate-limit counters with separate namespaces and graceful connection shutdown (runtime verification pending)
+- [x] Redis-backed atomic distributed API and authentication rate-limit counters with separate namespaces and graceful connection shutdown (ephemeral Redis CI verified; production failover/monitoring pending)
 - [x] Graceful API shutdown closes quality, freshness and notification Redis queues
-- [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, dependency audit, typecheck and builds (execution pending)
+- [x] GitHub Actions CI quality gates for PostgreSQL/Redis integration, dependency audit, typecheck and builds (main CI passed on Node.js 22, 24 and 26)
 - [x] CodeQL security analysis and Dependabot dependency update automation
 - [x] Security reporting policy and pull-request engineering checklist
 - [x] PostgreSQL custom-format backup and guarded restore utilities with SHA-256 verification
