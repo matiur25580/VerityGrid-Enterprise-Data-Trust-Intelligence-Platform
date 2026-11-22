@@ -14,6 +14,9 @@ import { authenticate } from "../middleware/authenticate";
 
 export const authRouter = Router();
 
+// A cached dummy hash keeps unknown-account login attempts on the bcrypt path too.
+const DUMMY_PASSWORD_HASH = bcrypt.hash(randomUUID(), 12);
+
 const registerSchema = z.object({
   organizationName: z.string().trim().min(2).max(160),
   displayName: z.string().trim().min(2).max(120),
@@ -98,9 +101,8 @@ authRouter.post("/login", async (request, response, next) => {
     }
 
     const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-    const passwordMatches = user
-      ? await bcrypt.compare(parsed.data.password, user.passwordHash)
-      : false;
+    const passwordHash = user?.passwordHash ?? await DUMMY_PASSWORD_HASH;
+    const passwordMatches = await bcrypt.compare(parsed.data.password, passwordHash);
 
     if (!user || !passwordMatches || !user.isActive) {
       response.status(401).json({ error: { code: "INVALID_CREDENTIALS", message: "Email or password is incorrect." } });
