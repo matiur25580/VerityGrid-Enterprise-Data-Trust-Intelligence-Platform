@@ -92,6 +92,55 @@ describe("identity and tenant security", () => {
     expect(qualityRun.body.data.run.score).toBe(100);
     expect(qualityRun.body.data.run.passedCount).toBe(2);
 
+    const freshnessPolicy = await client.post("/api/reliability/freshness/policies")
+      .set("x-organization-id", organizationId)
+      .send({ assetId, targetMinutes: 1440, warnAtPercent: 80 })
+      .expect(201);
+    expect(freshnessPolicy.body.data.policy.targetMinutes).toBe(1440);
+    const freshness = await client.get("/api/reliability/freshness")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(freshness.body.data.items.find((item: any) => item.assetId === assetId).status).toBe("HEALTHY");
+    const analytics = await client.get("/api/reliability/analytics")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(analytics.body.data.assets).toBe(1);
+    expect(analytics.body.data.qualityRuns).toBe(1);
+    const exportResponse = await client.get("/api/reliability/exports?type=quality-runs")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(exportResponse.headers["content-type"]).toContain("text/csv");
+    expect(exportResponse.text).toContain("passed_count");
+
+    await client.post(`/api/quality/assets/${assetId}/rules`)
+      .set("x-organization-id", organizationId)
+      .send({ name: "Minimum ten rows", ruleType: "MIN_ROW_COUNT", params: { minimum: 10 } })
+      .expect(201);
+    await client.post(`/api/quality/assets/${assetId}/runs`)
+      .set("x-organization-id", organizationId).send({}).expect(201);
+    const insights = await client.get("/api/reliability/assistant/insights")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(insights.body.data.mode).toBe("evidence-rules-v1");
+    expect(insights.body.data.insights.some((item: any) => item.evidenceIds.some((id: string) => id.startsWith("quality-run:")))).toBe(true);
+
+    const classificationPolicy = await client.post("/api/operations/policies")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Classification approval", policyType: "CLASSIFICATION_CHANGE", requiresApproval: true })
+      .expect(201);
+    const actionRequest = await client.post("/api/reliability/actions/classification")
+      .set("x-organization-id", organizationId)
+      .send({ assetId, policyId: classificationPolicy.body.data.policy.id, classification: "RESTRICTED", reason: "Sensitive customer data requires restricted handling." })
+      .expect(202);
+    expect(actionRequest.body.data.state).toBe("PENDING");
+    const unchangedAsset = await client.get("/api/catalog/assets?q=orders")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(unchangedAsset.body.data.assets[0].classification).toBe("CONFIDENTIAL");
+    await client.patch(`/api/operations/approvals/${actionRequest.body.data.approvalId}`)
+      .set("x-organization-id", organizationId)
+      .send({ decision: "APPROVED", comment: "Cannot approve own request." })
+      .expect(403);
+    await client.post(`/api/reliability/actions/${actionRequest.body.data.approvalId}/execute`)
+      .set("x-organization-id", organizationId).send({}).expect(409);
+    await client.get("/api/reliability/freshness")
+      .set("x-organization-id", randomUUID()).expect(403);
+
     const downstream = await client.post("/api/catalog/assets")
       .set("x-organization-id", organizationId)
       .send({
