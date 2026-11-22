@@ -32,7 +32,7 @@ Content-Type: application/json
 }
 ```
 
-Password length must be between 12 and 128 characters. Successful registration returns HTTP 201 and sets the session cookie. User, organization and OWNER membership creation is one database transaction.
+Password length must be between 12 and 72 characters (and no more than 72 UTF-8 bytes). Successful registration returns HTTP 201 and sets the session cookie. User, organization and OWNER membership creation is one database transaction.
 
 ## Sign in
 
