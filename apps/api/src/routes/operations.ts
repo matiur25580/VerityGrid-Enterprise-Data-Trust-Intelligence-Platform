@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
-import { enqueueQualityJob, qualityQueue } from "../lib/quality-worker";
+import { enqueueQualityJob, qualityQueue, deadLetterQueue } from "../lib/quality-worker";
 
 export const operationsRouter=Router();
 operationsRouter.use(authenticate,requireTenant);
@@ -35,6 +35,7 @@ operationsRouter.get("/jobs",async(req,res,next)=>{try{
  res.json({data:{jobs,counts:{waiting:waiting.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,active:active.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,failed:failed.filter(j=>j.data.organizationId===req.tenant!.organizationId).length,completed:completed.filter(j=>j.data.organizationId===req.tenant!.organizationId).length}}});
 }catch(e){next(e);}});
 
+operationsRouter.get("/dead-letters",async(req,res,next)=>{try{const jobs=await deadLetterQueue.getJobs(["waiting","failed"],0,99);const items=jobs.filter(j=>j.data.organizationId===req.tenant!.organizationId).map(j=>({id:j.id,assetId:j.data.assetId,failedAt:j.data.failedAt,errorCode:j.data.errorCode}));res.json({data:{deadLetters:items}});}catch(e){next(e);}});
 operationsRouter.get("/incidents",async(req,res,next)=>{try{const incidents=await prisma.incident.findMany({where:{organizationId:req.tenant!.organizationId},orderBy:{createdAt:"desc"},take:100,include:{events:{orderBy:{createdAt:"asc"}}}});res.json({data:{incidents}});}catch(e){next(e);}});
 operationsRouter.post("/incidents",writer,async(req,res,next)=>{try{
  const body=z.object({title:z.string().trim().min(4).max(180),description:z.string().trim().max(4000).optional(),severity:z.enum(["LOW","MEDIUM","HIGH","CRITICAL"]),assetId:uuid.optional(),assigneeId:uuid.optional()}).safeParse(req.body);
