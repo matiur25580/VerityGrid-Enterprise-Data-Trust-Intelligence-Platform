@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { hashSessionToken, SESSION_COOKIE } from "../lib/session";
+import { z } from "zod";
 
 declare global {
   namespace Express {
@@ -63,6 +64,10 @@ export async function requireTenant(
     const organizationId = request.header("x-organization-id");
     if (!organizationId) {
       response.status(400).json({ error: { code: "ORGANIZATION_REQUIRED", message: "Select an organization using x-organization-id." } });
+      return;
+    }
+    if (!z.string().uuid().safeParse(organizationId).success) {
+      response.status(400).json({ error: { code: "INVALID_ORGANIZATION_ID", message: "The organization ID must be a valid UUID." } });
       return;
     }
 
