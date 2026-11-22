@@ -15,7 +15,35 @@ jobs:
   lockfile:
     name: Resolve and verify workspace lockfile
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: veritygrid_test
+          POSTGRES_USER: veritygrid
+          POSTGRES_PASSWORD: veritygrid_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U veritygrid -d veritygrid_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://veritygrid:veritygrid_test@localhost:5432/veritygrid_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      WEB_ORIGIN: http://localhost:5173
     steps:
       - name: Checkout default branch
         uses: actions/checkout@v7
@@ -29,8 +57,18 @@ jobs:
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Verify clean reproducible installation
         run: npm ci --no-audit --no-fund
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
       - name: Generate Prisma Client
         run: npm run db:generate
+      - name: Apply database migrations
+        run: npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Run API and frontend tests
+        run: npm test
       - name: Require lockfile and switch CI to npm ci
         shell: bash
         run: |
@@ -47,7 +85,8 @@ jobs:
           body: |
             ## Summary
             - Generate the npm workspace lockfile from the committed manifests using Node.js 22.
-            - Verify a clean `npm ci` installation and Prisma Client generation.
+            - Verify a clean `npm ci` installation.
+            - Run dependency audit, Prisma generation and migrations, typecheck, build, and API/frontend tests.
             - Switch CI dependency installation from `npm install` to `npm ci`.
 
             Please review the lockfile diff and allow the normal CI and dependency-review workflows to complete before merging.
