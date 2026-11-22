@@ -4,7 +4,7 @@ import { prisma } from "./lib/prisma";
 import { closeQualityQueues } from "./lib/quality-worker";
 import { closeFreshnessWorker } from "./lib/freshness-worker";
 import { closeNotificationQueue } from "./lib/notifications";
-import { closeApiRateLimitStore } from "./middleware/api-rate-limit";
+import { closeRateLimitRedis } from "./lib/rate-limit-store";
 
 const port = Number(process.env.PORT ?? 4000);
 
@@ -24,7 +24,7 @@ const shutdown = (signal: string) => {
       process.exitCode = 1;
     }
     try {
-      await Promise.all([closeQualityQueues(), closeFreshnessWorker(), closeNotificationQueue(), closeApiRateLimitStore()]);
+      await Promise.all([closeQualityQueues(), closeFreshnessWorker(), closeNotificationQueue(), closeRateLimitRedis()]);
       await prisma.$disconnect();
     } catch (shutdownError) {
       console.error("Dependency shutdown failed.", { errorCode: shutdownError instanceof Error ? shutdownError.name : "UNKNOWN" });
