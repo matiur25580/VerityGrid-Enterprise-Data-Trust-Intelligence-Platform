@@ -11,7 +11,7 @@ This document distinguishes controls implemented in the current Phase 2 API from
 - Tenant access is resolved by matching the authenticated user ID with an organization membership. A client-supplied organization ID is never trusted without that membership check.
 - Organization roles are checked by API middleware for privileged routes.
 - All `/api` routes except health/readiness are protected by a 300-request-per-15-minute baseline limiter; registration and login retain a stricter 10-attempt-per-15-minute limiter.
-- Rate limiting currently uses the process-local memory store. Multi-instance deployments must use a shared store or enforce equivalent limits at a trusted gateway; limits are not globally coordinated by default.
+- Global API and authentication rate limits use an atomic Redis-backed store shared across API replicas. Redis must be reachable for rate-limited requests; Redis errors are not silently bypassed. Configure `REDIS_URL` with a private, authenticated production Redis endpoint and alert on connection failures.
 - Request bodies are size-limited; Helmet and an explicit CORS origin are configured.
 - Login performs a bcrypt comparison against a cached dummy hash when an account does not exist, reducing account-enumeration signals from the missing-user password path.
 - Each request receives a server-generated correlation ID and structured completion log that omits query strings, bodies, credentials, cookies and IP addresses.
