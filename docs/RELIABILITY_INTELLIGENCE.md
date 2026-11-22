@@ -18,7 +18,7 @@ Freshness is evaluated on read. This milestone does not run a periodic scheduler
 - `GET /api/reliability/exports?type=quality-runs`
 - `GET /api/reliability/exports?type=freshness`
 
-Exports are CSV, limited to the latest 1,000 rows, and include identifiers, timestamps, scores and operational statuses only. Imported records and raw data are not exported.
+Exports are CSV, limited to the latest 1,000 rows, and include identifiers, timestamps, scores and operational statuses only. Imported records and raw data are not exported. Cells beginning with spreadsheet formula prefixes (including prefixes after whitespace) are neutralized before quoting to reduce CSV formula-injection risk.
 
 ## Evidence-grounded assistant
 
