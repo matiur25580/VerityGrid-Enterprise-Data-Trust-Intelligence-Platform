@@ -3,7 +3,7 @@
 
 VerityGrid is a PERN-stack platform for discovering, validating, monitoring, and governing enterprise data assets. It is designed around a practical data-reliability lifecycle: register a source, catalog its assets, define quality expectations, execute checks, investigate incidents, and preserve an auditable record of decisions.
 
-> **Status:** Foundation, identity/tenant-security API, data catalog, quality/lineage and Phase 5 operations/governance implementation are committed. Phase 5 dependencies, Prisma migration, builds and automated tests have not yet been executed; do not treat this as deployment-ready.
+> **Status:** Foundation through Phase 6 reliability and intelligence implementation is committed. The Phase 6 migration, generated Prisma client, builds and automated tests still require local verification; do not treat this as deployment-ready.
 
 ## Product principles
 - **Evidence over decoration:** metrics must come from persisted records and executed checks, never hardcoded claims.
@@ -61,6 +61,7 @@ The API defaults to `http://localhost:4000`; the web application defaults to `ht
 - [Data Catalog API](docs/DATA_CATALOG.md)
 - [Quality & Lineage API](docs/QUALITY_LINEAGE.md)
 - [Operations & Governance API](docs/OPERATIONS_GOVERNANCE.md)
+- [Reliability & Intelligence](docs/RELIABILITY_INTELLIGENCE.md)
 
 ## Scope note
 VerityGrid is an engineering portfolio project, not a certified compliance product or a substitute for specialist legal, privacy, or security advice. Production use requires environment-specific security review, operational configuration, load testing, backups, and deployment verification.
