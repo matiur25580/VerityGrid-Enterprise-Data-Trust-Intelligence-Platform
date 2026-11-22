@@ -99,6 +99,45 @@ describe("identity and tenant security", () => {
       .expect(201);
     expect(source.body.data.source.organizationId).toBe(organizationId);
 
+    const linkedAsset = await client.post("/api/catalog/assets")
+      .set("x-organization-id", organizationId)
+      .send({
+        name: "finance_ledger",
+        fullyQualifiedName: "finance.ledger",
+        assetType: "TABLE",
+        sourceId: source.body.data.source.id,
+        schema: [{ name: "entry_id", type: "NUMBER" }],
+      })
+      .expect(201);
+    const sourceDetail = await client.get(`/api/catalog/sources/${source.body.data.source.id}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(sourceDetail.body.data.source._count.assets).toBe(1);
+    expect(sourceDetail.body.data.source.assets[0].id).toBe(linkedAsset.body.data.asset.id);
+    expect(sourceDetail.body.data.source).not.toHaveProperty("metadata");
+
+    await client.post("/api/catalog/sources")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Finance Warehouse", sourceType: "POSTGRESQL" })
+      .expect(201);
+    await client.post("/api/catalog/sources")
+      .set("x-organization-id", organizationId)
+      .send({ name: "Operations Archive", sourceType: "JSON" })
+      .expect(201);
+    const firstSourcePage = await client.get("/api/catalog/sources?q=Finance&limit=1")
+      .set("x-organization-id", organizationId).expect(200);
+    expect(firstSourcePage.body.data.sources).toHaveLength(1);
+    expect(firstSourcePage.body.data.pagination.hasMore).toBe(true);
+    const secondSourcePage = await client.get(`/api/catalog/sources?q=Finance&limit=1&cursor=${firstSourcePage.body.data.pagination.nextCursor}`)
+      .set("x-organization-id", organizationId).expect(200);
+    expect(secondSourcePage.body.data.sources).toHaveLength(1);
+    expect(secondSourcePage.body.data.pagination.hasMore).toBe(false);
+    await client.get(`/api/catalog/sources?sourceType=CSV&cursor=${firstSourcePage.body.data.pagination.nextCursor}`)
+      .set("x-organization-id", organizationId).expect(400);
+    await client.get(`/api/catalog/sources/${randomUUID()}`)
+      .set("x-organization-id", organizationId).expect(404);
+    await client.get(`/api/catalog/sources/${source.body.data.source.id}`)
+      .set("x-organization-id", randomUUID()).expect(403);
+
     const imported = await client
       .post("/api/catalog/assets/import")
       .set("x-organization-id", organizationId)
