@@ -25,7 +25,7 @@ Before promoting a release:
 - The API emits structured completion logs containing request ID, method, path, status, duration and timestamp. Query strings, request bodies, credentials, cookies and client IP addresses are intentionally excluded.
 - Correlate client-reported request IDs with API logs. Forward logs to a managed log platform with access controls and retention policies.
 
-Redis and worker health should be monitored independently using Redis metrics and BullMQ queue state. A healthy API response does not imply that background workers are healthy.
+Redis and worker health should be monitored independently using Redis metrics and BullMQ queue state. A healthy API response does not imply that background workers are healthy. Global API and authentication rate limits use atomic Redis counters shared across replicas; set `REDIS_URL` on every API instance, use a private authenticated endpoint, and alert on connection failures. Rate-limited API requests fail closed when Redis is unavailable. The global limiter and authentication limiter use separate namespaces.
 
 ## 3. PostgreSQL backup
 
