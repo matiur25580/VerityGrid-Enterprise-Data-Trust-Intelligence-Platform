@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { app } from "./app";
+import { prisma } from "./lib/prisma";
+import { closeQualityQueues } from "./lib/quality-worker";
 
 const port = Number(process.env.PORT ?? 4000);
 
@@ -13,11 +15,12 @@ const server = app.listen(port, () => {
 
 const shutdown = (signal: string) => {
   console.info(`${signal} received; shutting down HTTP server.`);
-  server.close((error) => {
+  server.close(async (error) => {
     if (error) {
       console.error("HTTP server shutdown failed.", error);
       process.exitCode = 1;
     }
+    try { await closeQualityQueues(); await prisma.$disconnect(); } catch (shutdownError) { console.error("Dependency shutdown failed.", shutdownError); process.exitCode = 1; }
   });
 };
 
