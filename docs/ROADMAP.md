@@ -9,7 +9,8 @@
 - [x] First responsive product shell
 - [ ] Install dependencies and verify clean builds
 - [ ] Add automated API and frontend test runners
-- [ ] Add database migration and CI workflow
+- [x] Add database migrations and GitHub Actions CI workflow (execution pending)
+- [ ] Add frontend automated test runner
 
 ## Phase 2 — Identity and tenant security
 - [x] Organization registration and sign-in API
