@@ -13,6 +13,7 @@ function object(value: Prisma.JsonValue): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
+// Evaluate active quality rules against profiling evidence scoped to the requested organization and asset.
 export async function processQualityJob(data: ValidationJob) {
   const asset = await prisma.dataAsset.findFirst({ where: { id: data.assetId, organizationId: data.organizationId } });
   if (!asset) throw new Error("DATASET_NOT_FOUND");
