@@ -16,6 +16,7 @@ declare global {
   }
 }
 
+// Resolve the opaque session cookie by its hash and reject revoked, expired, or inactive-user sessions.
 export async function authenticate(
   request: Request,
   response: Response,
