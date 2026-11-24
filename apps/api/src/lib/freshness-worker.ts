@@ -17,6 +17,7 @@ function evaluate(lastObservedAt: Date | null, targetMinutes: number, warnAtPerc
 }
 
 /** One bounded, tenant-aware pass. Repeated ticks update the same incident instead of creating duplicates. */
+// Evaluate freshness SLAs in bounded pages and upsert daily snapshots to keep repeated runs idempotent.
 export async function processFreshnessEvaluation(now = new Date()) {
   let evaluated = 0, opened = 0, recovered = 0;
   let cursor: string | undefined;
