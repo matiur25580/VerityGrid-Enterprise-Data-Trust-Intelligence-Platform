@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+// Apply the configured-origin check to state-changing requests while allowing safe HTTP methods through.
 export function originGuard(request: Request, response: Response, next: NextFunction): void {
   if (SAFE_METHODS.has(request.method)) {
     next();
