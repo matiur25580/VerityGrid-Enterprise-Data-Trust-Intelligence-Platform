@@ -11,6 +11,7 @@ export type ContractDrift = {
 
 const normalizeType = (value: string) => value.trim().toUpperCase();
 
+// Compare expected and observed fields, classifying schema drift according to the selected compatibility mode.
 export function evaluateSchemaCompatibility(
   expected: ContractField[],
   actual: ContractField[],
