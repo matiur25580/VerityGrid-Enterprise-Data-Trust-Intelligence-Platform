@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma";
 import { authenticate, requireRoles, requireTenant } from "../middleware/authenticate";
 
 export const qualityRouter = Router();
+// Require a valid session and organization membership for every data-quality rule endpoint.
 qualityRouter.use(authenticate, requireTenant);
 
 const writer = requireRoles("OWNER", "ADMIN", "DATA_STEWARD", "DATA_ENGINEER");
